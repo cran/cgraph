@@ -1,3 +1,21 @@
+/*
+Copyright 2018 Ron Triepels
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#include <inttypes.h>
+
 #include <R.h>
 #include <Rinternals.h>
 
@@ -5,33 +23,33 @@ SEXP address(SEXP graph)
 {
   char address[32];
 
-  snprintf(address, 32, "%p", (void *)graph);
+  sprintf(address, "0x%" PRIxPTR, (uintptr_t)graph);
 
   return(mkString(address));
 }
 
 SEXP bsum(SEXP x, SEXP n)
 {
-  int k = LENGTH(x), j = 0, n_val;
+  int k = LENGTH(x), j = 0, nx;
 
-  double * x_val, * y_val;
+  double * px, * py;
 
-  n_val = INTEGER(n)[0];
+  nx = INTEGER(n)[0];
 
-  SEXP y = PROTECT(allocVector(REALSXP, n_val));
+  SEXP y = PROTECT(allocVector(REALSXP, nx));
 
   x = coerceVector(x, REALSXP);
 
-  x_val = REAL(x);
-  y_val = REAL(y);
+  px = REAL(x);
+  py = REAL(y);
 
-  memset(y_val, 0, n_val * sizeof(double));
+  memset(py, 0, nx * sizeof(double));
 
   for(int i = 0; i < k; i++)
   {
-    y_val[j] += x_val[i];
+    py[j] += px[i];
 
-    if(j < n_val - 1)
+    if(j < nx - 1)
     {
       j++;
     }

@@ -1,3 +1,17 @@
+# Copyright 2018 Ron Triepels
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 #' Computational Graph
 #'
 #' The \code{cgraph} class facilitates the construction, evaluation, and differentiation of computaiontal graphs in R.
@@ -7,7 +21,7 @@
 #'
 #' @section Members:
 #' \describe{
-#' \item{$nodes}{list, symbols of the nodes.}
+#' \item{$nodes}{named list, symbols of the nodes.}
 #' \item{$values}{environment, values of the nodes.}
 #' }
 #'
@@ -39,7 +53,7 @@
 #' b <- parm(4, name = "b")
 #'
 #' # Perform some operations on the parameters.
-#' c <- sin(a) + cos(b) - tan(a) + tanh(b)
+#' c <- sin(a) + cos(b) - tan(a)
 #'
 #' # Evaluate c.
 #' values <- run(c)
@@ -108,15 +122,13 @@ cgraph$public_methods$initialize <- function()
 #' @examples # Initialize a new computational graph.
 #' x <- cgraph$new()
 #'
-#' # Generate some names
+#' # Generate some names.
 #' x$name(0); x$name(1); x$name(2); x$name(3)
 #'
 #' @name cg.name
 #' @author Ron Triepels
 cgraph$public_methods$name <- function(type = 3)
 {
-  type <- as.integer(type)
-
   .Call("cg_gen_name", type, self, PACKAGE = "cgraph")
 }
 
@@ -126,7 +138,7 @@ cgraph$public_methods$name <- function(type = 3)
 #'
 #' @details \code{$const(value, name)}
 #'
-#' @param value numeric scalar or array, value of the node.
+#' @param value numeric vector or array, value of the node (optional).
 #' @param name character scalar or symbol, name of the node (optional). In case argument \code{name} is missing, the node is tried to be added to the graph under an auto-generated name.
 #'
 #' @note Constants are ignored when differentiating a graph. The intended use of constants is that they are given a fixed value. However, it is still possible to change the value of constants when evaluating or differentiating a graph (see \link[cgraph]{run} and \link[cgraph]{gradients} for more details).
@@ -147,30 +159,17 @@ cgraph$public_methods$name <- function(type = 3)
 #' @author Ron Triepels
 cgraph$public_methods$const <- function(value, name)
 {
-  type <- as.integer(0)
-
   if(missing(value))
   {
     value <- NULL
-  }
-  else
-  {
-    if(!(is.numeric(value) | is.array(value)))
-    {
-      stop("value must be a numeric vector or array")
-    }
   }
 
   if(missing(name))
   {
     name <- NULL
   }
-  else
-  {
-    name <- as.character(name)
-  }
 
-  .Call("cg_add_placeholder", value, name, type, self, PACKAGE = "cgraph")
+  .Call("cg_add_constant", value, name, self, PACKAGE = "cgraph")
 }
 
 #' Add Input
@@ -179,7 +178,7 @@ cgraph$public_methods$const <- function(value, name)
 #'
 #' @details \code{$input(value, name)}
 #'
-#' @param value numeric scalar or array, value of the node.
+#' @param value numeric vector or array, value of the node (optional).
 #' @param name character scalar or symbol, name of the node (optional). In case argument \code{name} is missing, the node is tried to be added to the graph under an auto-generated name.
 #'
 #' @note The intended use of inputs is that they are not given a fixed value but behave as placeholders. Values can be supplied for inputs when evaluating or differentiating a graph (see \link[cgraph]{run} and \link[cgraph]{gradients} for more details).
@@ -200,30 +199,17 @@ cgraph$public_methods$const <- function(value, name)
 #' @author Ron Triepels
 cgraph$public_methods$input <- function(value, name)
 {
-  type <- as.integer(1)
-
   if(missing(value))
   {
     value <- NULL
-  }
-  else
-  {
-    if(!(is.numeric(value) | is.array(value)))
-    {
-      stop("value must be a numeric vector or array")
-    }
   }
 
   if(missing(name))
   {
     name <- NULL
   }
-  else
-  {
-    name <- as.character(name)
-  }
 
-  .Call("cg_add_placeholder", value, name, type, self, PACKAGE = "cgraph")
+  .Call("cg_add_input", value, name, self, PACKAGE = "cgraph")
 }
 
 #' Add Parameter
@@ -232,7 +218,7 @@ cgraph$public_methods$input <- function(value, name)
 #'
 #' @details \code{$parm(value, name)}
 #'
-#' @param value numeric scalar or array, value of the node.
+#' @param value numeric vector or array, value of the node (optional).
 #' @param name character scalar or symbol, name of the node (optional). In case \code{name} is missing, the node is tried to be added to the graph under an auto-generated name.
 #'
 #' @note Parameters are assumed to be subject to some optimization process. Hence, their value might change over time.
@@ -253,30 +239,17 @@ cgraph$public_methods$input <- function(value, name)
 #' @author Ron Triepels
 cgraph$public_methods$parm <- function(value, name)
 {
-  type <- as.integer(2)
-
   if(missing(value))
   {
     value <- NULL
-  }
-  else
-  {
-    if(!(is.numeric(value) | is.array(value)))
-    {
-      stop("value must be a numeric vector or array")
-    }
   }
 
   if(missing(name))
   {
     name <- NULL
   }
-  else
-  {
-    name <- as.character(name)
-  }
 
-  .Call("cg_add_placeholder", value, name, type, self, PACKAGE = "cgraph")
+  .Call("cg_add_parameter", value, name, self, PACKAGE = "cgraph")
 }
 
 #' Get Parameters
@@ -300,7 +273,7 @@ cgraph$public_methods$parm <- function(value, name)
 #' @author Ron Triepels
 cgraph$public_methods$get.parms <- function()
 {
-  .Call("cg_get_parms", self);
+  .Call("cg_get_parms", self, PACKAGE = "cgraph")
 }
 
 #' Add Parameters
@@ -333,15 +306,8 @@ cgraph$public_methods$add.parms <- function(..., parms = NULL)
   {
     parms <- list(...)
   }
-  else
-  {
-    if(!is.list(parms))
-    {
-      stop("parms must be a list")
-    }
-  }
 
-  invisible(.Call("cg_add_parms", parms, self))
+  invisible(.Call("cg_add_parms", parms, self, PACKAGE = "cgraph"))
 }
 
 #' Add Operation
@@ -350,14 +316,14 @@ cgraph$public_methods$add.parms <- function(..., parms = NULL)
 #'
 #' @details \code{$opr(call, grads, binding, name)}
 #'
-#' @param call expression or call, operations performed by the node.
-#' @param grads named list of expressions or calls, gradients of the input nodes that are consumed by the operation in argument \code{call}.
-#' @param binding named list or environment, binds the variables used in the expressions or calls of argument \code{call} and \code{grads} to the symbols of the nodes in the graph.
+#' @param call call or symbol, operation performed by the node. Must evaluate to a numeric vector or array.
+#' @param grads named list of calls, gradients of the input nodes that are consumed by the operation in argument \code{call}. Is ignored when the elements are not named.
+#' @param binding named list or environment, binds the variables in the calls of argument \code{call} and \code{grads} to the symbols of the nodes in the graph.
 #' @param name character scalar or symbol, name of the node (optional). In case argument \code{name} is missing, the node is tried to be added to the graph under an auto-generated name.
 #'
-#' @note The operation to be performed by the node should be provided as an expression or call to argument \code{call}. If this operation consumes any other nodes in the graph, then the gradients of the current node with respect to these input nodes should be supplied as an expression or call to argument \code{gradients}. These gradients must be a function of each input's gradient. The special reserved word 'grad' evaluates to this gradient at run-time and can be used in the expression and call of each input's gradient as placeholder.
+#' @note The operation to be performed by the node should be provided as a call to argument \code{call}. If this operation consumes any other nodes in the graph, then the gradients of the operation with respect to these input nodes should be supplied as a call to argument \code{gradients}. These gradients must be a function of each input's gradient. The special reserved word 'grad' evaluates to this gradient at run-time and can be used in the call of each input's gradient as placeholder.
 #'
-#' Any variabes used in the expressions or calls of the node (both supplied to argument \code{call} and \code{gradients}) should be bind to the symbols of the nodes in the graph. This can be done by supplying the names of the variables and the corresponding nodes to which the variables should bind to \code{binding}. At run-time, the symbols of the nodes are substituted for the variables in the expressions or calls.
+#' Any variabes in the calls of the node (both supplied to argument \code{call} and \code{gradients}) should be bind to the symbols of the nodes in the graph. This can be done by supplying the names of the variables and the corresponding nodes to which the variables should bind to \code{binding}. At run-time, the symbols of the nodes are substituted for the variables in the calls.
 #'
 #' The name of the operation node cannot be 'grad' as this is a reserved word.
 #'
@@ -369,32 +335,14 @@ cgraph$public_methods$add.parms <- function(..., parms = NULL)
 #' @author Ron Triepels
 cgraph$public_methods$opr <- function(call, grads, binding, name)
 {
-  type <- as.integer(3)
-
-  if(!(is.name(call) || is.call(call)))
+  if(is.list(binding))
   {
-    call <- as.call(call)
-  }
-
-  grads <- as.list(grads)
-
-  if(!is.environment(binding))
-  {
-    if(!is.list(binding))
-    {
-      stop("binding must be a named list or environment")
-    }
-
     binding <- list2env(binding)
   }
 
   if(missing(name))
   {
     name <- NULL
-  }
-  else
-  {
-    name <- as.character(name)
   }
 
   .Call("cg_add_operation", call, grads, binding, name, self, PACKAGE = "cgraph")
@@ -434,7 +382,7 @@ cgraph$public_methods$active <- function()
 #'
 #' @details \code{$run(name, values = list())}
 #'
-#' @param name character scalar or symbol, name of the node that is evaluated.
+#' @param name character scalar, name of the node that is evaluated.
 #' @param values named list or environment, values that are subsituted for the nodes in the graph.
 #'
 #' @note All nodes required to compute node \code{name} must have a value or their value must be able to be computed at run-time. Nodes can be assigned a value when they are created. Alternatively, argument \code{values} can be used to substitute values for nodes that do not have a value (e.g. inputs) or to fix their values.
@@ -464,15 +412,8 @@ cgraph$public_methods$active <- function()
 #' @author Ron Triepels
 cgraph$public_methods$run <- function(name, values = list())
 {
-  name <- as.character(name)
-
-  if(!is.environment(values))
+  if(is.list(values))
   {
-    if(!is.list(values))
-    {
-      stop("values must be a named list or environment")
-    }
-
     values <- list2env(values)
   }
 
@@ -485,7 +426,7 @@ cgraph$public_methods$run <- function(name, values = list())
 #'
 #' @details \code{$gradients(name, values, index = 1)}
 #'
-#' @param name character scalar or symbol, name of the node that is differentiated.
+#' @param name character scalar, name of the node that is differentiated.
 #' @param values named list or environment, values that are subsituted for the nodes in the graph.
 #' @param index numeric scalar, index of the target node that is differentiated. Defaults to the first element.
 #'
@@ -507,7 +448,7 @@ cgraph$public_methods$run <- function(name, values = list())
 #' b <- x$parm(4, name = "b")
 #'
 #' # Perform some operations on the parameters.
-#' c <- sin(a) + cos(b) - tan(a) + tanh(b)
+#' c <- sin(a) + cos(b) - tan(a)
 #'
 #' # Differentiate the graph with respect to c.
 #' grads <- x$gradients(c, x$run(c))
@@ -519,21 +460,12 @@ cgraph$public_methods$run <- function(name, values = list())
 #' @author Ron Triepels
 cgraph$public_methods$gradients <- function(name, values = list(), index = 1)
 {
-  name <- as.character(name)
-
-  if(!is.environment(values))
+  if(is.list(values))
   {
-    if(!is.list(values))
-    {
-      stop("values must be a named list or environment")
-    }
-
     values <- list2env(values)
   }
 
-  index <- as.integer(index)
-
-  .Call("cg_gradients", name, index, values, self, PACKAGE = "cgraph")
+  .Call("cg_gradients", name, values, index, self, PACKAGE = "cgraph")
 }
 
 #' Approximate Gradients
@@ -542,8 +474,8 @@ cgraph$public_methods$gradients <- function(name, values = list(), index = 1)
 #'
 #' @details \code{$approx.grad(x, y, values = list(), index = 1, eps = 1e-4)}
 #'
-#' @param x character scalar or symbol, name of the node.
-#' @param y character scalar or symbol, name of the node.
+#' @param x character scalar, name of the node.
+#' @param y character scalar, name of the node.
 #' @param values named list or environment, values that are subsituted for the nodes in the graph.
 #' @param index numeric scalar, index of the target node that is differentiated. Defaults to the first element.
 #' @param eps numeric scalar, step size. Defaults to 1e-4.
@@ -566,7 +498,7 @@ cgraph$public_methods$gradients <- function(name, values = list(), index = 1)
 #' b <- x$parm(4, name = "b")
 #'
 #' # Perform some operations on the parameters.
-#' c <- sin(a) + cos(b) - tan(a) + tanh(b)
+#' c <- sin(a) + cos(b) - tan(a)
 #'
 #' # Differentiate the graph with respect to c.
 #' grads <- x$gradients(c, x$run(c))
@@ -581,25 +513,12 @@ cgraph$public_methods$gradients <- function(name, values = list(), index = 1)
 #' @author Ron Triepels
 cgraph$public_methods$approx.grad <- function(x, y, values = list(), index = 1, eps = 1e-4)
 {
-  x <- as.character(x)
-
-  y <- as.character(y)
-
-  if(!is.environment(values))
+  if(is.list(values))
   {
-    if(!is.list(values))
-    {
-      stop("values must be a named list or environment")
-    }
-
     values <- list2env(values)
   }
 
-  index <- as.integer(index)
-
-  eps <- as.numeric(eps)
-
-  .Call("cg_approx_grad", x, y, index, values, eps, self, PACKAGE = "cgraph")
+  .Call("cg_approx_grad", x, y, values, index, eps, self, PACKAGE = "cgraph")
 }
 
 #' Adjacency Matrix

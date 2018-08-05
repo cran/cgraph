@@ -1,3 +1,17 @@
+# Copyright 2018 Ron Triepels
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 #' Coerce to a Numeric Vector
 #'
 #' Coerce \code{x} to a one-dimensional numeric vector.
@@ -77,7 +91,7 @@ cg.as.numeric <- function(x, name = cgraph::name())
 
 #' Reshape Array Dimensions
 #'
-#' Change the dimensions of array \code{x} to \code{dims}.
+#' Change the dimensions of array \code{x} to \code{dim}.
 #'
 #' @param x cg.node, placeholder for a numeric vector or array.
 #' @param dim numeric scalar or vector, the dimensions of the new array.
@@ -122,10 +136,10 @@ cg.reshape.grad <- function(x, grad)
 
 #' Coerce to an Array
 #'
-#' Coerce \code{x} to an array with dimensions \code{dims}.
+#' Coerce \code{x} to an array with dimensions \code{dim}.
 #'
 #' @param x cg.node, placeholder for a numeric vector or array.
-#' @param dims numeric scalar or vector, the dimensions of the new array.
+#' @param dim numeric scalar or vector, the dimensions of the new array.
 #' @param name character scalar, name of the operation (optional).
 #' @param ... further arguments passed to or from other methods.
 #'
@@ -134,9 +148,9 @@ cg.reshape.grad <- function(x, grad)
 #' @return cg.node, node of the operation.
 #'
 #' @author Ron Triepels
-as.array.cg.node <- function(x, dims, name = cgraph::name(), ...)
+as.array.cg.node <- function(x, dim, name = cgraph::name(), ...)
 {
-  cgraph::cg.reshape(x, dims, name)
+  cgraph::cg.reshape(x, dim, name)
 }
 
 #' Matrix Transpose

@@ -4,7 +4,7 @@
 \alias{cg.gradients}
 \title{Calculate Gradients}
 \arguments{
-\item{name}{character scalar or symbol, name of the node that is differentiated.}
+\item{name}{character scalar, name of the node that is differentiated.}
 
 \item{values}{named list or environment, values that are subsituted for the nodes in the graph.}
 
@@ -37,7 +37,7 @@ a <- x$parm(2, name = "a")
 b <- x$parm(4, name = "b")
 
 # Perform some operations on the parameters.
-c <- sin(a) + cos(b) - tan(a) + tanh(b)
+c <- sin(a) + cos(b) - tan(a)
 
 # Differentiate the graph with respect to c.
 grads <- x$gradients(c, x$run(c))

@@ -1,3 +1,19 @@
+/*
+Copyright 2018 Ron Triepels
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 #include <R.h>
 #include <Rinternals.h>
 
@@ -44,6 +60,8 @@ SEXP cgraph(SEXP graph, SEXP values)
     values = NewEnv(R_BaseEnv);
   }
 
+  setAttrib(nodes, R_NamesSymbol, allocVector(STRSXP, 0));
+
   defineVar(install("nodes"), nodes, graph);
   defineVar(install("values"), values, graph);
 
@@ -54,19 +72,161 @@ SEXP cgraph(SEXP graph, SEXP values)
   return graph;
 }
 
+int is_cgraph(SEXP x)
+{
+  SEXP x_class = getAttrib(x, R_ClassSymbol);
+
+  if(!isEnvironment(x))
+  {
+    return FALSE;
+  }
+
+  if(!isString(x_class))
+  {
+    return FALSE;
+  }
+
+  if(strcmp(CHAR(asChar(x_class)), "cgraph") != 0)
+  {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+int is_cg_node(SEXP x)
+{
+  SEXP x_class = getAttrib(x, R_ClassSymbol);
+
+  if(!isString(x) || asChar(x) == R_BlankString)
+  {
+    return FALSE;
+  }
+
+  if(!isString(x_class))
+  {
+    return FALSE;
+  }
+
+  if(strcmp(CHAR(asChar(x_class)), "cg.node") != 0)
+  {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+SEXP cg_find_nodes(SEXP graph)
+{
+  if(!is_cgraph(graph))
+  {
+    errorcall(R_NilValue, "invalid cgraph object provided");
+  }
+
+  SEXP nodes = findVarInFrame(graph, install("nodes"));
+
+  SEXP names = getAttrib(nodes, R_NamesSymbol);
+
+  if(TYPEOF(nodes) != VECSXP || !isString(names))
+  {
+    errorcall(R_NilValue, "cannot find valid nodes object in cgraph object environment");
+  }
+
+  return nodes;
+}
+
+SEXP cg_find_values(SEXP graph)
+{
+  if(!is_cgraph(graph))
+  {
+    errorcall(R_NilValue, "invalid cgraph object provided");
+  }
+
+  SEXP values = findVarInFrame(graph, install("values"));
+
+  if(!isEnvironment(values))
+  {
+    errorcall(R_NilValue, "cannot find valid values object in cgraph object environment");
+  }
+
+  return values;
+}
+
+void cg_add_node(SEXP node, SEXP graph)
+{
+  SEXP nodes = cg_find_nodes(graph);
+
+  SEXP names = getAttrib(nodes, R_NamesSymbol);
+
+  if(!is_cg_node(node))
+  {
+    errorcall(R_NilValue, "invalid cg.node object provided");
+  }
+
+  int n = LENGTH(nodes);
+
+  nodes = PROTECT(lengthgets(nodes, n + 1));
+
+  names = PROTECT(lengthgets(names, n + 1));
+
+  SET_VECTOR_ELT(nodes, n, node);
+
+  SET_STRING_ELT(names, n, asChar(node));
+
+  setAttrib(nodes, R_NamesSymbol, names);
+
+  setVar(install("nodes"), nodes, graph);
+
+  UNPROTECT(2);
+}
+
+void cg_add_value(SEXP node, SEXP value, SEXP graph)
+{
+  SEXP values = cg_find_values(graph);
+
+  if(!is_cg_node(node))
+  {
+    errorcall(R_NilValue, "invalid cg.node object provided");
+  }
+
+  if(!isNumeric(value))
+  {
+    errorcall(R_NilValue, "node '%s' does not evaluate to a numeric vector or array", CHAR(asChar(node)));
+  }
+
+  if(isInteger(value))
+  {
+    value = coerceVector(value, REALSXP);
+  }
+
+  defineVar(install(CHAR(asChar(node))), value, values);
+}
+
 SEXP cg_gen_name(SEXP type, SEXP graph)
 {
   char name[32];
 
   int count = 0;
 
-  SEXP nodes = findVar(install("nodes"), graph);
+  SEXP nodes = cg_find_nodes(graph);
 
-  for (int i = 0; i < LENGTH(nodes); i++)
+  if(!isNumber(type))
+  {
+    errorcall(R_NilValue, "type must be a numeric scalar");
+  }
+
+  for(int i = 0; i < LENGTH(nodes); i++)
   {
     SEXP node = VECTOR_ELT(nodes, i);
 
-    if(asInteger(getAttrib(node, install("type"))) == asInteger(type))
+    SEXP node_type = getAttrib(node, install("type"));
+
+    if(!isInteger(node_type))
+    {
+      errorcall(R_NilValue, "node '%s' has an invalid type", CHAR(asChar(node)));
+    }
+
+    if(asInteger(node_type) == asInteger(type))
     {
       count += 1;
     }
@@ -75,15 +235,23 @@ SEXP cg_gen_name(SEXP type, SEXP graph)
   switch(asInteger(type))
   {
     case CGCST :
-      sprintf(name, "cst%d", count + 1); break;
+      sprintf(name, "cst%d", count + 1);
+      break;
+
     case CGIPT :
-      sprintf(name, "ipt%d", count + 1); break;
+      sprintf(name, "ipt%d", count + 1);
+      break;
+
     case CGPRM :
-      sprintf(name, "prm%d", count + 1); break;
+      sprintf(name, "prm%d", count + 1);
+      break;
+
     case CGOPR :
-      sprintf(name, "opr%d", count + 1); break;
+      sprintf(name, "opr%d", count + 1);
+      break;
+
     default :
-      error("invalid type");
+      errorcall(R_NilValue, "invalid type provided");
   }
 
   return mkString(name);
@@ -91,30 +259,40 @@ SEXP cg_gen_name(SEXP type, SEXP graph)
 
 int cg_node_id(SEXP name, SEXP graph)
 {
-  SEXP nodes = findVar(install("nodes"), graph);
+  SEXP nodes = cg_find_nodes(graph);
+
+  if(!(isString(name) || isSymbol(name)))
+  {
+    errorcall(R_NilValue, "name must be a character scalar or symbol");
+  }
 
   for(int i = LENGTH(nodes) - 1; i >= 0; i--)
   {
     SEXP node = VECTOR_ELT(nodes, i);
 
-    if(strcmp(CHAR(asChar(node)), CHAR(name)) == 0)
+    if(strcmp(CHAR(asChar(node)), CHAR(asChar(name))) == 0)
     {
       return i + 1;
     }
   }
 
-  error("cannot find node '%s'", CHAR(name));
+  errorcall(R_NilValue, "cannot find node '%s'", CHAR(asChar(name)));
 }
 
 int cg_node_exists(SEXP name, SEXP graph)
 {
-  SEXP nodes = findVar(install("nodes"), graph);
+  SEXP nodes = cg_find_nodes(graph);
+
+  if(!(isString(name) || isSymbol(name)))
+  {
+    errorcall(R_NilValue, "name must be a character scalar or symbol");
+  }
 
   for(int i = 0; i < LENGTH(nodes); i++)
   {
     SEXP node = VECTOR_ELT(nodes, i);
 
-    if(strcmp(CHAR(asChar(node)), CHAR(name)) == 0)
+    if(strcmp(CHAR(asChar(node)), CHAR(asChar(name))) == 0)
     {
       return TRUE;
     }
@@ -123,72 +301,131 @@ int cg_node_exists(SEXP name, SEXP graph)
   return FALSE;
 }
 
-SEXP cg_add_placeholder(SEXP value, SEXP name, SEXP type, SEXP graph)
+SEXP cg_node(SEXP name, SEXP type, SEXP graph)
 {
-  SEXP nodes = findVar(install("nodes"), graph);
+  SEXP node = R_NilValue;
 
-  int n = LENGTH(nodes);
-
-  if(name == R_NilValue)
+  if(isNull(name))
   {
-    name = PROTECT(cg_gen_name(type, graph));
+    node = PROTECT(cg_gen_name(type, graph));
   }
   else
   {
-    name = PROTECT(mkString(CHAR(asChar(name))));
+    if(!isString(name) || asChar(name) == R_BlankString)
+    {
+      errorcall(R_NilValue, "the name of a node must be a non-blank character scalar");
+    }
+
+    node = PROTECT(mkString(CHAR(asChar(name))));
   }
 
-  if(cg_node_exists(asChar(name), graph))
+  if(cg_node_exists(node, graph))
   {
-    error("'%s' is already defined", CHAR(asChar(name)));
+    errorcall(R_NilValue, "node '%s' is already defined", CHAR(asChar(node)));
   }
 
-  if(strcmp(CHAR(asChar(name)), "grad") == 0)
+  if(strcmp(CHAR(asChar(node)), "grad") == 0)
   {
-    error("'grad' is a reserved word that cannot be used");
+    errorcall(R_NilValue, "'grad' is a reserved word that cannot be used");
   }
 
-  nodes = PROTECT(lengthgets(nodes, n + 1));
+  if(!isNumber(type))
+  {
+    errorcall(R_NilValue, "type must be an numeric scalar");
+  }
 
   switch(asInteger(type))
   {
     case CGCST :
-      setAttrib(name, install("type"), ScalarInteger(CGCST)); break;
+      setAttrib(node, install("type"), ScalarInteger(CGCST));
+      setAttrib(node, install("grads"), allocVector(VECSXP, 0));
+      setAttrib(node, install("childeren"), allocVector(INTSXP, 0));
+      break;
+
     case CGIPT :
-      setAttrib(name, install("type"), ScalarInteger(CGIPT)); break;
+      setAttrib(node, install("type"), ScalarInteger(CGIPT));
+      setAttrib(node, install("grads"), allocVector(VECSXP, 0));
+      setAttrib(node, install("childeren"), allocVector(INTSXP, 0));
+      break;
+
     case CGPRM :
-      setAttrib(name, install("type"), ScalarInteger(CGPRM)); break;
+      setAttrib(node, install("type"), ScalarInteger(CGPRM));
+      setAttrib(node, install("grads"), allocVector(VECSXP, 0));
+      setAttrib(node, install("childeren"), allocVector(INTSXP, 0));
+      break;
+
+    case CGOPR :
+      setAttrib(node, install("type"), ScalarInteger(CGOPR));
+      setAttrib(node, install("call"), R_NilValue);
+      setAttrib(node, install("grads"), allocVector(VECSXP, 0));
+      setAttrib(node, install("parents"), allocVector(INTSXP, 0));
+      setAttrib(node, install("childeren"), allocVector(INTSXP, 0));
+      break;
+
     default :
-      error("invalid type");
+      errorcall(R_NilValue, "invalid type provided");
   }
+
+  setAttrib(node, R_ClassSymbol, mkString("cg.node"));
+
+  UNPROTECT(1);
+
+  return node;
+}
+
+SEXP cg_add_constant(SEXP value, SEXP name, SEXP graph)
+{
+  SEXP node = PROTECT(cg_node(name, ScalarInteger(CGCST), graph));
 
   if(!isNull(value))
   {
-    SEXP values = findVar(install("values"), graph);
-
-    value = coerceVector(value, REALSXP);
-
-    defineVar(install(CHAR(asChar(name))), value, values);
+    cg_add_value(node, value, graph);
   }
 
-  setAttrib(name, install("grads"), allocVector(VECSXP, 0));
-  setAttrib(name, install("childeren"), allocVector(INTSXP, 0));
-  setAttrib(name, install("class"), mkString("cg.node"));
+  cg_add_node(node, graph);
 
-  SET_VECTOR_ELT(nodes, n, name);
+  UNPROTECT(1);
 
-  setVar(install("nodes"), nodes, graph);
+  return node;
+}
 
-  UNPROTECT(2);
+SEXP cg_add_input(SEXP value, SEXP name, SEXP graph)
+{
+  SEXP node = PROTECT(cg_node(name, ScalarInteger(CGIPT), graph));
 
-  return name;
+  if(!isNull(value))
+  {
+    cg_add_value(node, value, graph);
+  }
+
+  cg_add_node(node, graph);
+
+  UNPROTECT(1);
+
+  return node;
+}
+
+SEXP cg_add_parameter(SEXP value, SEXP name, SEXP graph)
+{
+  SEXP node = PROTECT(cg_node(name, ScalarInteger(CGPRM), graph));
+
+  if(!isNull(value))
+  {
+    cg_add_value(node, value, graph);
+  }
+
+  cg_add_node(node, graph);
+
+  UNPROTECT(1);
+
+  return node;
 }
 
 SEXP cg_get_parms(SEXP graph)
 {
-  SEXP nodes = findVar(install("nodes"), graph);
+  SEXP nodes = cg_find_nodes(graph);
 
-  SEXP values = findVar(install("values"), graph);
+  SEXP values = cg_find_values(graph);
 
   int n = LENGTH(nodes), l = 0;
 
@@ -200,9 +437,14 @@ SEXP cg_get_parms(SEXP graph)
   {
     SEXP node = VECTOR_ELT(nodes, i);
 
-    SEXP type = getAttrib(node, install("type"));
+    SEXP node_type = getAttrib(node, install("type"));
 
-    if(asInteger(type) == CGPRM)
+    if(!isInteger(node_type))
+    {
+      errorcall(R_NilValue, "node '%s' has an invalid type", CHAR(asChar(node)));
+    }
+
+    if(asInteger(node_type) == CGPRM)
     {
       SEXP value = findVarInFrame(values, install(CHAR(asChar(node))));
 
@@ -231,24 +473,23 @@ SEXP cg_add_parms(SEXP parms, SEXP graph)
 {
   SEXP names = getAttrib(parms, R_NamesSymbol);
 
+  if(TYPEOF(parms) != VECSXP)
+  {
+    errorcall(R_NilValue, "parms must be a named list");
+  }
+
   for(int i = 0; i < LENGTH(parms); i++)
   {
     SEXP name = R_NilValue;
 
     SEXP value = VECTOR_ELT(parms, i);
 
-    if(names == R_NilValue)
+    if(!isNull(names))
     {
-      name = PROTECT(cg_gen_name(ScalarInteger(CGPRM), graph));
-    }
-    else
-    {
-      name = PROTECT(ScalarString(STRING_ELT(names, i)));
+      name = ScalarString(STRING_ELT(names, i));
     }
 
-    cg_add_placeholder(value, name, ScalarInteger(CGPRM), graph);
-
-    UNPROTECT(1);
+    cg_add_parameter(value, name, graph);
   }
 
   return R_NilValue;
@@ -256,27 +497,21 @@ SEXP cg_add_parms(SEXP parms, SEXP graph)
 
 SEXP cg_add_operation(SEXP call, SEXP grads, SEXP binding, SEXP name, SEXP graph)
 {
-  SEXP nodes = findVar(install("nodes"), graph);
+  SEXP node = PROTECT(cg_node(name, ScalarInteger(CGOPR), graph));
 
-  int n = LENGTH(nodes), g;
-
-  if(name == R_NilValue)
+  if(!(isLanguage(call) || isSymbol(call)))
   {
-    name = PROTECT(cg_gen_name(ScalarInteger(CGOPR), graph));
-  }
-  else
-  {
-    name = PROTECT(mkString(CHAR(asChar(name))));
+    errorcall(R_NilValue, "call must be a call or symbol");
   }
 
-  if(cg_node_exists(asChar(name), graph))
+  if(TYPEOF(grads) != VECSXP)
   {
-    error("'%s' is already defined", CHAR(asChar(name)));
+    errorcall(R_NilValue, "grads must be a named list");
   }
 
-  if(strcmp(CHAR(asChar(name)), "grad") == 0)
+  if(!isEnvironment(binding))
   {
-    error("'grad' is a reserved word that cannot be used");
+    errorcall(R_NilValue, "binding must be an environment");
   }
 
   SEXP vars = R_lsInternal3(binding, TRUE, FALSE);
@@ -287,85 +522,105 @@ SEXP cg_add_operation(SEXP call, SEXP grads, SEXP binding, SEXP name, SEXP graph
 
     SEXP value = findVar(install(CHAR(var)), binding);
 
-    if(!isSymbol(value) & !isString(value))
+    if(!isString(value))
     {
-      error("variable '%s' in binding must be a name or character", CHAR(var));
+      errorcall(R_NilValue, "object '%s' in binding must be a character scalar", CHAR(var));
     }
 
     setVar(install(CHAR(var)), coerceVector(value, SYMSXP), binding);
   }
 
-  g = LENGTH(grads);
+  SEXP parents = R_NilValue;
 
-  SEXP parents = PROTECT(allocVector(INTSXP, g));
+  SEXP nodes = cg_find_nodes(graph);
 
   SEXP names = getAttrib(grads, R_NamesSymbol);
 
-  for(int i = 0; i < g; i++)
+  if(isNull(names))
   {
-    SEXP symbol = findVarInFrame(binding, install(CHAR(STRING_ELT(names, i))));
+    parents = PROTECT(allocVector(INTSXP, 0));
+  }
+  else
+  {
+    int n = LENGTH(nodes), g = LENGTH(names);
 
-    if(symbol == R_UnboundValue)
+    parents = PROTECT(allocVector(INTSXP, g));
+
+    for(int i = 0; i < g; i++)
     {
-      error("cannot find '%s' in binding", CHAR(STRING_ELT(names, i)));
+      SEXP grad_name = STRING_ELT(names, i);
+
+      if(grad_name == R_BlankString)
+      {
+        errorcall(R_NilValue, "blank name provided for gradient at index %d", i + 1);
+      }
+
+      SEXP symbol = findVarInFrame(binding, install(CHAR(grad_name)));
+
+      if(symbol == R_UnboundValue)
+      {
+        errorcall(R_NilValue, "cannot find object '%s' in binding", CHAR(STRING_ELT(names, i)));
+      }
+
+      INTEGER(parents)[i] = cg_node_id(symbol, graph);
     }
 
-    INTEGER(parents)[i] = cg_node_id(asChar(symbol), graph);
+    for(int i = 0; i < g; i++)
+    {
+      SEXP parent = VECTOR_ELT(nodes, INTEGER(parents)[i] - 1);
+
+
+      /* Add gradient to parent node */
+      SEXP parent_grads = getAttrib(parent, install("grads"));
+
+      if(TYPEOF(parent_grads) != VECSXP)
+      {
+        errorcall(R_NilValue, "node '%s' has invalid grads", CHAR(asChar(node)));
+      }
+
+      int h = LENGTH(parent_grads);
+
+      parent_grads = PROTECT(lengthgets(parent_grads, h + 1));
+
+      SET_VECTOR_ELT(parent_grads, h, substitute(VECTOR_ELT(grads, i), binding));
+
+      setAttrib(parent, install("grads"), parent_grads);
+
+
+      /* Add child to parent node */
+      SEXP parent_childeren = getAttrib(parent, install("childeren"));
+
+      if(!isInteger(parent_childeren))
+      {
+        errorcall(R_NilValue, "node '%s' has invalid childeren", CHAR(asChar(node)));
+      }
+
+      int c = LENGTH(parent_childeren);
+
+      parent_childeren = PROTECT(lengthgets(parent_childeren, c + 1));
+
+      INTEGER(parent_childeren)[c] = n + 1;
+
+      setAttrib(parent, install("childeren"), parent_childeren);
+
+
+      UNPROTECT(2);
+    }
   }
 
-  for(int i = 0; i < g; i++)
-  {
-    SEXP parent = VECTOR_ELT(nodes, INTEGER(parents)[i] - 1);
+  setAttrib(node, install("call"), substitute(call, binding));
+  setAttrib(node, install("parents"), parents);
 
+  cg_add_node(node, graph);
 
-    /* Add gradient to parent node */
-    SEXP parent_grads = getAttrib(parent, install("grads"));
+  UNPROTECT(2);
 
-    int h = LENGTH(parent_grads);
-
-    parent_grads = PROTECT(lengthgets(parent_grads, h + 1));
-
-    SET_VECTOR_ELT(parent_grads, h, substitute(VECTOR_ELT(grads, i), binding));
-
-    setAttrib(parent, install("grads"), parent_grads);
-
-
-    /* Add child to parent node */
-    SEXP parent_childeren = getAttrib(parent, install("childeren"));
-
-    int c = LENGTH(parent_childeren);
-
-    parent_childeren = PROTECT(lengthgets(parent_childeren, c + 1));
-
-    INTEGER(parent_childeren)[c] = n + 1;
-
-    setAttrib(parent, install("childeren"), parent_childeren);
-
-
-    UNPROTECT(2);
-  }
-
-  nodes = PROTECT(lengthgets(nodes, n + 1));
-
-  setAttrib(name, install("type"), ScalarInteger(CGOPR));
-  setAttrib(name, install("call"), substitute(call, binding));
-  setAttrib(name, install("grads"), allocVector(VECSXP, 0));
-  setAttrib(name, install("parents"), parents);
-  setAttrib(name, install("childeren"), allocVector(INTSXP, 0));
-  setAttrib(name, install("class"), mkString("cg.node"));
-
-  SET_VECTOR_ELT(nodes, n, name);
-
-  setVar(install("nodes"), nodes, graph);
-
-  UNPROTECT(3);
-
-  return name;
+  return node;
 }
 
-SEXP cg_traverse_graph(SEXP id, SEXP graph)
+static SEXP cg_traverse_graph(SEXP name, SEXP graph)
 {
-  SEXP nodes = findVar(install("nodes"), graph);
+  SEXP nodes = cg_find_nodes(graph);
 
   int l = 0, n = LENGTH(nodes), visited[n];
 
@@ -375,7 +630,7 @@ SEXP cg_traverse_graph(SEXP id, SEXP graph)
 
   stack s = stack_init(n);
 
-  stack_push(&s, asInteger(id));
+  stack_push(&s, cg_node_id(name, graph));
 
   while(!stack_is_empty(&s))
   {
@@ -387,13 +642,7 @@ SEXP cg_traverse_graph(SEXP id, SEXP graph)
 
     if(visited[current - 1] == 0)
     {
-      if(isNull(parents))
-      {
-        INTEGER(ids)[l] = stack_pop(&s);
-
-        l++;
-      }
-      else
+      if(isInteger(parents))
       {
         int m = LENGTH(parents);
 
@@ -405,20 +654,26 @@ SEXP cg_traverse_graph(SEXP id, SEXP graph)
           }
         }
       }
+      else
+      {
+        INTEGER(ids)[l] = stack_pop(&s);
+
+        l++;
+      }
     }
     else
     {
       if(visited[current - 1] == 1)
       {
-        if(isNull(parents))
-        {
-          stack_remove(&s);
-        }
-        else
+        if(isInteger(parents))
         {
           INTEGER(ids)[l] = stack_pop(&s);
 
           l++;
+        }
+        else
+        {
+          stack_remove(&s);
         }
       }
       else
@@ -439,21 +694,33 @@ SEXP cg_traverse_graph(SEXP id, SEXP graph)
   return ids;
 }
 
-void cg_forward(SEXP ids, SEXP values, SEXP graph)
+static void cg_forward(SEXP ids, SEXP values, SEXP graph)
 {
-  SEXP nodes = findVar(install("nodes"), graph);
+  SEXP nodes = cg_find_nodes(graph);
 
   for(int i = 0; i < LENGTH(ids); i++)
   {
     SEXP node = VECTOR_ELT(nodes, INTEGER(ids)[i] - 1);
 
-    SEXP type = getAttrib(node, install("type"));
+    SEXP node_type = getAttrib(node, install("type"));
 
-    if(asInteger(type) == CGOPR)
+    if(!isInteger(node_type))
+    {
+      errorcall(R_NilValue, "node '%s' has an invalid type", CHAR(asChar(node)));
+    }
+
+    SEXP value = R_NilValue;
+
+    if(asInteger(node_type) == CGOPR)
     {
       SEXP call = getAttrib(node, install("call"));
 
-      SEXP value = PROTECT(eval(call, values));
+      if(!(isLanguage(call) || isSymbol(call)))
+      {
+        errorcall(R_NilValue, "node '%s' has an invalid call", CHAR(asChar(node)));
+      }
+
+      value = PROTECT(eval(call, values));
 
       defineVar(install(CHAR(asChar(node))), value, values);
 
@@ -461,21 +728,49 @@ void cg_forward(SEXP ids, SEXP values, SEXP graph)
     }
     else
     {
-      SEXP value = eval(install(CHAR(asChar(node))), values);
+      value = eval(install(CHAR(asChar(node))), values);
+    }
 
-      if(!isNumeric(value))
-      {
-        error("'%s' cannot be found or is not a numeric vector or array", CHAR(asChar(node)));
-      }
+    if(!isNumeric(value))
+    {
+      errorcall(R_NilValue, "object '%s' does not evaluate to a numeric vector or array but a %s",
+                CHAR(asChar(node)), type2char(TYPEOF(value)));
     }
   }
 }
 
-void cg_backward(SEXP ids, SEXP index, SEXP values, SEXP grads, SEXP graph)
+static SEXP cg_root_grad(SEXP value, SEXP index)
+{
+  SEXP grad = PROTECT(duplicate(value));
+
+  if(!isNumber(grad))
+  {
+    errorcall(R_NilValue, "cannot differentiate an object of type %s", type2char(TYPEOF(grad)));
+  }
+
+  int n = LENGTH(value);
+
+  if(asInteger(index) < 1 || asInteger(index) > n)
+  {
+    errorcall(R_NilValue, "invalid index provided");
+  }
+
+  grad = coerceVector(grad, REALSXP);
+
+  memset(REAL(grad), 0, n * sizeof(double));
+
+  REAL(grad)[asInteger(index) - 1] = 1;
+
+  UNPROTECT(1);
+
+  return grad;
+}
+
+static void cg_backward(SEXP ids, SEXP index, SEXP values, SEXP grads, SEXP graph)
 {
   int n = LENGTH(ids);
 
-  SEXP nodes = findVar(install("nodes"), graph);
+  SEXP nodes = cg_find_nodes(graph);
 
   SEXP grad_env = PROTECT(NewEnv(values));
 
@@ -483,20 +778,9 @@ void cg_backward(SEXP ids, SEXP index, SEXP values, SEXP grads, SEXP graph)
   {
     SEXP root = VECTOR_ELT(nodes, INTEGER(ids)[n - 1] - 1);
 
-    SEXP root_grad = eval(install(CHAR(asChar(root))), values);
+    SEXP root_value = eval(install(CHAR(asChar(root))), values);
 
-    root_grad = PROTECT(duplicate(root_grad));
-
-    int g = LENGTH(root_grad);
-
-    if(INTEGER(index)[0] < 1 || INTEGER(index)[0] > g)
-    {
-      error("invalid index");
-    }
-
-    memset(REAL(root_grad), 0, g * sizeof(double));
-
-    REAL(root_grad)[INTEGER(index)[0] - 1] = 1;
+    SEXP root_grad = PROTECT(cg_root_grad(root_value, index));
 
     defineVar(install(CHAR(asChar(root))), root_grad, grads);
 
@@ -506,52 +790,77 @@ void cg_backward(SEXP ids, SEXP index, SEXP values, SEXP grads, SEXP graph)
 
       SEXP node_type = getAttrib(node, install("type"));
 
+      if(!isInteger(node_type))
+      {
+        errorcall(R_NilValue, "node '%s' has an invalid type", CHAR(asChar(node)));
+      }
+
       if(asInteger(node_type) == CGPRM || asInteger(node_type) == CGOPR)
       {
         SEXP node_grads = getAttrib(node, install("grads"));
 
         SEXP node_childeren = getAttrib(node, install("childeren"));
 
-        if(!isNull(node_grads) & !isNull(node_childeren))
+        if(TYPEOF(node_grads) != VECSXP)
         {
-          SEXP node_grad = R_NilValue;
+          errorcall(R_NilValue, "node '%s' has invalid gradients", CHAR(asChar(node)));
+        }
 
-          for(int j = 0; j < LENGTH(node_childeren); j++)
+        if(!isInteger(node_childeren))
+        {
+          errorcall(R_NilValue, "node '%s' has invalid childeren", CHAR(asChar(node)));
+        }
+
+        if(LENGTH(node_grads) != LENGTH(node_childeren))
+        {
+          errorcall(R_NilValue, "node '%s' has an unequal number of gradients (%d) and childeren (%d)",
+                    CHAR(asChar(node)), LENGTH(node_grads), LENGTH(node_childeren));
+        }
+
+        SEXP node_grad = R_NilValue;
+
+        for(int j = 0; j < LENGTH(node_childeren); j++)
+        {
+          SEXP child = VECTOR_ELT(nodes, INTEGER(node_childeren)[j] - 1);
+
+          SEXP child_value = findVarInFrame(grads, install(CHAR(asChar(child))));
+
+          if(child_value != R_UnboundValue)
           {
-            SEXP child = VECTOR_ELT(nodes, INTEGER(node_childeren)[j] - 1);
+            SEXP node_grad_call = VECTOR_ELT(node_grads, j);
 
-            SEXP child_value = findVarInFrame(grads, install(CHAR(asChar(child))));
-
-            if(child_value != R_UnboundValue)
+            if(!(isLanguage(node_grad_call) || isSymbol(node_grad_call)))
             {
-              defineVar(install("grad"), child_value, grad_env);
+              errorcall(R_NilValue, "node '%s' has an invalid gradient at index %d", CHAR(asChar(node)), j + 1);
+            }
 
-              if(isNull(node_grad))
+            defineVar(install("grad"), child_value, grad_env);
+
+            if(isNull(node_grad))
+            {
+              node_grad = eval(node_grad_call, grad_env);
+
+              node_grad = PROTECT(duplicate(node_grad));
+            }
+            else
+            {
+              SEXP child_grad = PROTECT(eval(node_grad_call, grad_env));
+
+              for(int k = 0; k < LENGTH(child_grad); k++)
               {
-                node_grad = eval(VECTOR_ELT(node_grads, j), grad_env);
-
-                node_grad = PROTECT(duplicate(node_grad));
+                REAL(node_grad)[k] += REAL(child_grad)[k];
               }
-              else
-              {
-                SEXP child_grad = PROTECT(eval(VECTOR_ELT(node_grads, j), grad_env));
 
-                for(int k = 0; k < LENGTH(child_grad); k++)
-                {
-                  REAL(node_grad)[k] += REAL(child_grad)[k];
-                }
-
-                UNPROTECT(1);
-              }
+              UNPROTECT(1);
             }
           }
+        }
 
-          defineVar(install(CHAR(asChar(node))), node_grad, grads);
+        defineVar(install(CHAR(asChar(node))), node_grad, grads);
 
-          if(!isNull(node_grad))
-          {
-            UNPROTECT(1);
-          }
+        if(!isNull(node_grad))
+        {
+          UNPROTECT(1);
         }
       }
     }
@@ -564,11 +873,19 @@ void cg_backward(SEXP ids, SEXP index, SEXP values, SEXP grads, SEXP graph)
 
 SEXP cg_run(SEXP name, SEXP values, SEXP graph)
 {
-  int id = cg_node_id(asChar(name), graph);
+  if(!isString(name) || asChar(name) == R_BlankString)
+  {
+    errorcall(R_NilValue, "name must be a non-blank character scalar");
+  }
 
-  SEXP ids = PROTECT(cg_traverse_graph(ScalarInteger(id), graph));
+  if(!isEnvironment(values))
+  {
+    errorcall(R_NilValue, "values must be an environment");
+  }
 
-  SET_ENCLOS(values, findVar(install("values"), graph));
+  SEXP ids = PROTECT(cg_traverse_graph(name, graph));
+
+  SET_ENCLOS(values, cg_find_values(graph));
 
   cg_forward(ids, values, graph);
 
@@ -577,15 +894,28 @@ SEXP cg_run(SEXP name, SEXP values, SEXP graph)
   return values;
 }
 
-SEXP cg_gradients(SEXP name, SEXP index, SEXP values, SEXP graph)
+SEXP cg_gradients(SEXP name, SEXP values, SEXP index, SEXP graph)
 {
-  int id = cg_node_id(asChar(name), graph);
+  if(!isString(name) || asChar(name) == R_BlankString)
+  {
+    errorcall(R_NilValue, "name must be a non-blank character scalar");
+  }
+
+  if(!isNumber(index))
+  {
+    errorcall(R_NilValue, "index must be a numeric scalar");
+  }
+
+  if(!isEnvironment(values))
+  {
+    errorcall(R_NilValue, "values must be an environment");
+  }
 
   SEXP grads = PROTECT(NewEnv(R_NilValue));
 
-  SEXP ids = PROTECT(cg_traverse_graph(ScalarInteger(id), graph));
+  SEXP ids = PROTECT(cg_traverse_graph(name, graph));
 
-  SET_ENCLOS(values, findVar(install("values"), graph));
+  SET_ENCLOS(values, cg_find_values(graph));
 
   cg_backward(ids, index, values, grads, graph);
 
@@ -594,62 +924,101 @@ SEXP cg_gradients(SEXP name, SEXP index, SEXP values, SEXP graph)
   return grads;
 }
 
-SEXP cg_approx_grad(SEXP x, SEXP y, SEXP index, SEXP values, SEXP eps, SEXP graph)
+SEXP cg_approx_grad(SEXP x, SEXP y, SEXP values, SEXP index, SEXP eps, SEXP graph)
 {
-  int x_id = cg_node_id(asChar(x), graph);
-  int y_id = cg_node_id(asChar(y), graph);
+  int indx;
 
-  SEXP nodes = findVar(install("nodes"), graph);
+  double epsx;
 
-  SEXP ids = PROTECT(cg_traverse_graph(ScalarInteger(x_id), graph));
+  SEXP nodes = cg_find_nodes(graph);
 
-  SEXP x_node = VECTOR_ELT(nodes, x_id - 1);
-  SEXP y_node = VECTOR_ELT(nodes, y_id - 1);
+  if(!isString(x) || asChar(x) == R_BlankString)
+  {
+    errorcall(R_NilValue, "x must be a non-blank character scalar");
+  }
+
+  if(!isString(y) || asChar(y) == R_BlankString)
+  {
+    errorcall(R_NilValue, "y must be a non-blank character scalar");
+  }
+
+  if(!isEnvironment(values))
+  {
+    errorcall(R_NilValue, "values must be an environment");
+  }
+
+  if(!isNumber(index))
+  {
+    errorcall(R_NilValue, "index must be a numeric scalar");
+  }
+
+  if(!isNumber(eps))
+  {
+    errorcall(R_NilValue, "eps must be a numeric scalar");
+  }
+
+  indx = asInteger(index);
+  epsx = asReal(eps);
+
+  SEXP ids = PROTECT(cg_traverse_graph(x, graph));
+
+  SEXP x_node = VECTOR_ELT(nodes, cg_node_id(x, graph) - 1);
+  SEXP y_node = VECTOR_ELT(nodes, cg_node_id(y, graph) - 1);
 
   SEXP x_node_type = getAttrib(x_node, install("type"));
   SEXP y_node_type = getAttrib(y_node, install("type"));
 
-  if(INTEGER(x_node_type)[0] != CGOPR)
+  if(!isInteger(x_node_type))
   {
-    error("x must be an operation node");
+    errorcall(R_NilValue, "node '%s' has an invalid type", CHAR(asChar(x)));
   }
 
-  if(INTEGER(y_node_type)[0] == CGOPR)
+  if(!isInteger(y_node_type))
   {
-    error("y cannot be an operation node");
+    errorcall(R_NilValue, "node '%s' has an invalid type", CHAR(asChar(y)));
   }
 
-  SET_ENCLOS(values, findVar(install("values"), graph));
+  if(asInteger(x_node_type) != CGOPR)
+  {
+    errorcall(R_NilValue, "x must be an operation node");
+  }
+
+  if(asInteger(y_node_type) == CGOPR)
+  {
+    errorcall(R_NilValue, "y cannot be an operation node");
+  }
+
+  SET_ENCLOS(values, cg_find_values(graph));
 
   cg_forward(ids, values, graph);
 
   SEXP x_value = PROTECT(eval(install(CHAR(asChar(x_node))), values));
   SEXP y_value = PROTECT(eval(install(CHAR(asChar(y_node))), values));
 
-  if(INTEGER(index)[0] < 1 || INTEGER(index)[0] > LENGTH(x_value))
+  if(indx < 1 || indx > LENGTH(x_value))
   {
-    error("invalid index");
+    errorcall(R_NilValue, "invalid index provided");
   }
 
   SEXP grad = PROTECT(duplicate(y_value));
 
   for(int i = 0; i < LENGTH(grad); i++)
   {
-    REAL(y_value)[i] += REAL(eps)[0];
+    REAL(y_value)[i] += epsx;
 
     cg_forward(ids, values, graph);
 
     SEXP x_value1 = PROTECT(eval(install(CHAR(asChar(x_node))), values));
 
-    REAL(y_value)[i] -= 2 * REAL(eps)[0];
+    REAL(y_value)[i] -= 2 * epsx;
 
     cg_forward(ids, values, graph);
 
     SEXP x_value2 = PROTECT(eval(install(CHAR(asChar(x_node))), values));
 
-    REAL(grad)[i] = (REAL(x_value1)[INTEGER(index)[0] - 1] - REAL(x_value2)[INTEGER(index)[0] - 1]) / (2 * REAL(eps)[0]);
+    REAL(grad)[i] = (REAL(x_value1)[indx - 1] - REAL(x_value2)[indx - 1]) / (2 * epsx);
 
-    REAL(y_value)[i] += REAL(eps)[0];
+    REAL(y_value)[i] += epsx;
 
     UNPROTECT(2);
   }
@@ -661,7 +1030,7 @@ SEXP cg_approx_grad(SEXP x, SEXP y, SEXP index, SEXP values, SEXP eps, SEXP grap
 
 SEXP cg_adj_mat(SEXP graph)
 {
-  SEXP nodes = findVar(install("nodes"), graph);
+  SEXP nodes = cg_find_nodes(graph);
 
   int n = LENGTH(nodes);
 
@@ -677,12 +1046,14 @@ SEXP cg_adj_mat(SEXP graph)
 
     SEXP childeren = getAttrib(node, install("childeren"));
 
-    if(!isNull(childeren))
+    if(!isInteger(childeren))
     {
-      for (int j = 0; j < LENGTH(childeren); j++)
-      {
-        INTEGER(mat)[i + n * (INTEGER(childeren)[j] - 1)] = 1;
-      }
+      errorcall(R_NilValue, "node '%s' has invalid childeren", CHAR(asChar(node)));
+    }
+
+    for(int j = 0; j < LENGTH(childeren); j++)
+    {
+      INTEGER(mat)[i + n * (INTEGER(childeren)[j] - 1)] = 1;
     }
 
     SET_STRING_ELT(names, i, asChar(node));

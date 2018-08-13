@@ -14,31 +14,46 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <inttypes.h>
+#define R_NO_REMAP
 
 #include <R.h>
 #include <Rinternals.h>
 
-SEXP address(SEXP graph)
+#include <inttypes.h>
+
+SEXP address(SEXP x)
 {
   char address[32];
 
-  sprintf(address, "0x%" PRIxPTR, (uintptr_t)graph);
+  sprintf(address, "0x%" PRIxPTR, (uintptr_t)x);
 
-  return(mkString(address));
+  return(Rf_mkString(address));
 }
 
 SEXP bsum(SEXP x, SEXP n)
 {
-  int k = LENGTH(x), j = 0, nx;
-
   double * px, * py;
 
-  nx = INTEGER(n)[0];
+  if(!Rf_isNumeric(x))
+  {
+    Rf_errorcall(R_NilValue, "x must be a numerical vector or array");
+  }
 
-  SEXP y = PROTECT(allocVector(REALSXP, nx));
+  if(!Rf_isNumeric(n))
+  {
+    Rf_errorcall(R_NilValue, "n must be a non-negative numerical scalar");
+  }
 
-  x = coerceVector(x, REALSXP);
+  if(Rf_asInteger(n) < 0)
+  {
+    Rf_errorcall(R_NilValue, "invalid block size");
+  }
+
+  int nx = Rf_asInteger(n), k = LENGTH(x), j = 0;
+
+  SEXP y = PROTECT(Rf_allocVector(REALSXP, nx));
+
+  x = Rf_coerceVector(x, REALSXP);
 
   px = REAL(x);
   py = REAL(y);

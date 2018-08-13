@@ -1,3 +1,12 @@
+cgraph 2.0.1
+----------------------------------------------------------------
+
+Bug fixes:
+
+* Function `run` and `gradients` no longer change the parent environment of argument `values` when the argument is an environment.
+* Function `name` no longer generates a name that indicates the node type for performance reasons. Instead, it simply generates the name 'node' followed by the number of nodes that have been added to the graph.
+* Fixed several protection bugs in the C-API thanks to `rchk`.
+
 cgraph 2.0.0
 ----------------------------------------------------------------
 
@@ -16,13 +25,12 @@ Documentation:
 
 * Removed collate field in package description as it is no longer needed.
 
-Bug Fixes:
+Bug fixes:
 
 * Improved error handling. An error is now raised when an invalid object is provided to the methods of a `cgraph` object instead of trying to coerce the object to a valid object.
 * Function `opr` now ignores argument `grads` when its elements are not properly named.
 * Function `run` now checks whether each node evaluates to a numeric vector or array.
-* Function `gradients` now checks whether the node supplied to argument `name` evaluates to a numeric vector or array. 
-* Function `address` now correctly shows the address of a `cgraph` object on Windows machines.
+* Function `gradients` now checks whether the node supplied to argument `name` evaluates to a numeric vector or array.
 * Function `get.parms` and `add.parms` now correctly call the underlying C-API.
 
 cgraph 1.0.1
@@ -37,10 +45,6 @@ Documentation:
 * Improved the package title and description.
 * Added RGraphviz to suggests.
 * Added examples to the documentation of the most important methods of a `cgraph` object and their corresponding wrapper functions.
-
-Bug Fixes:
-
-* Function `address` now correctly calls the underlying C-API. 
 
 cgraph 1.0.0
 ----------------------------------------------------------------

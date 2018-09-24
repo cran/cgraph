@@ -28,7 +28,7 @@ export(run)
 export(gradients)
 export(approx.grad)
 
-# Export array functions
+# Export array operators
 export(cg.matmul)
 export(cg.crossprod)
 export(cg.tcrossprod)
@@ -51,7 +51,25 @@ export(cgraph)
 # Export cgraph methods
 S3method(plot, cgraph)
 
-# Export math functions
+# Export logical operators
+export(cg.not)
+export(cg.equal)
+export(cg.not.equal)
+export(cg.less)
+export(cg.greater)
+export(cg.less.equal)
+export(cg.greater.equal)
+
+# Export logical methods
+S3method(`!`, cg.node)
+S3method(`==`, cg.node)
+S3method(`!=`, cg.node)
+S3method(`<`, cg.node)
+S3method(`>`, cg.node)
+S3method(`<=`, cg.node)
+S3method(`>=`, cg.node)
+
+# Export math operators
 export(cg.add)
 export(cg.pos)
 export(cg.sub)
@@ -72,31 +90,34 @@ S3method(`-`, cg.node)
 S3method(`*`, cg.node)
 S3method(`/`, cg.node)
 S3method(`^`, cg.node)
-S3method(sqrt, cg.node)
-S3method(exp, cg.node)
-S3method(log2, cg.node)
-S3method(log10, cg.node)
-S3method(abs, cg.node)
+S3method(sqrt, cg.node) # Deprecated
+S3method(exp, cg.node) # Deprecated
+S3method(log2, cg.node) # Deprecated
+S3method(log10, cg.node) # Deprecated
+S3method(abs, cg.node) # Deprecated
 
 # Export misc functions
+export(sigmoid)
+
+# Export misc operators
 export(cg.sigmoid)
 
 # Export print methods
 S3method(print, cgraph)
 S3method(print, cg.node)
 
-# Export transform functions
+# Export transform operators
 export(cg.as.double)
 export(cg.as.numeric)
 export(cg.reshape)
 export(cg.t)
 
 # Export transform methods
-S3method(as.double, cg.node)
-S3method(as.array, cg.node)
-S3method(t, cg.node)
+S3method(as.double, cg.node) # Deprecated
+S3method(as.array, cg.node) # Deprecated
+S3method(t, cg.node) # Deprecated
 
-# Export trig functions
+# Export trig operators
 export(cg.sin)
 export(cg.cos)
 export(cg.tan)
@@ -111,15 +132,15 @@ export(cg.acosh)
 export(cg.atanh)
 
 # Export trig methods
-S3method(sin, cg.node)
-S3method(cos, cg.node)
-S3method(tan, cg.node)
-S3method(sinh, cg.node)
-S3method(cosh, cg.node)
-S3method(tanh, cg.node)
-S3method(asin, cg.node)
-S3method(acos, cg.node)
-S3method(atan, cg.node)
-S3method(asinh, cg.node)
-S3method(acosh, cg.node)
-S3method(atanh, cg.node)
+S3method(sin, cg.node) # Deprecated
+S3method(cos, cg.node) # Deprecated
+S3method(tan, cg.node) # Deprecated
+S3method(sinh, cg.node) # Deprecated
+S3method(cosh, cg.node) # Deprecated
+S3method(tanh, cg.node) # Deprecated
+S3method(asin, cg.node) # Deprecated
+S3method(acos, cg.node) # Deprecated
+S3method(atan, cg.node) # Deprecated
+S3method(asinh, cg.node) # Deprecated
+S3method(acosh, cg.node) # Deprecated
+S3method(atanh, cg.node) # Deprecated

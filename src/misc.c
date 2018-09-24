@@ -19,55 +19,40 @@ limitations under the License.
 #include <R.h>
 #include <Rinternals.h>
 
-#include <inttypes.h>
-
-SEXP address(SEXP x)
+SEXP sigmoid(SEXP x)
 {
-  char address[32];
-
-  sprintf(address, "0x%" PRIxPTR, (uintptr_t)x);
-
-  return(Rf_mkString(address));
-}
-
-SEXP bsum(SEXP x, SEXP n)
-{
-  double * px, * py;
+  double * py;
 
   if(!Rf_isNumeric(x))
   {
     Rf_errorcall(R_NilValue, "x must be a numerical vector or array");
   }
 
-  if(!Rf_isNumeric(n))
+  PROTECT_INDEX ipy;
+
+  SEXP y = R_NilValue;
+
+  PROTECT_WITH_INDEX(y = Rf_duplicate(x), &ipy);
+
+  if(!Rf_isReal(y))
   {
-    Rf_errorcall(R_NilValue, "n must be a non-negative numerical scalar");
+    REPROTECT(y = Rf_coerceVector(y, REALSXP), ipy);
   }
 
-  if(Rf_asInteger(n) < 0)
-  {
-    Rf_errorcall(R_NilValue, "invalid block size");
-  }
-
-  int size = Rf_asInteger(n), k = LENGTH(x), j = 0;
-
-  SEXP y = PROTECT(Rf_allocVector(REALSXP, size));
-
-  x = PROTECT(Rf_coerceVector(x, REALSXP));
-
-  px = REAL(x);
   py = REAL(y);
 
-  memset(py, 0, size * sizeof(double));
+  const double min = DBL_EPSILON, max = 1 - DBL_EPSILON;
 
-  for(int i = 0; i < k; i++)
+  for(int i = 0; i < LENGTH(x); i++)
   {
-    py[j] += px[i];
+    py[i] = 1 / (1 + exp(-py[i]));
 
-    j = j < size - 1 ? j + 1 : 0;
+    py[i] = py[i] < min ? min : py[i];
+
+    py[i] = py[i] > max ? max : py[i];
   }
 
-  UNPROTECT(2);
+  UNPROTECT(1);
 
   return y;
 }

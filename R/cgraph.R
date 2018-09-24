@@ -75,8 +75,8 @@ NULL
 
 cgraph <- R6Class(
   classname = "cgraph",
-  class = T,
-  cloneable = T,
+  class = TRUE,
+  cloneable = TRUE,
   public = list(
     nodes = NULL,
     values = NULL
@@ -448,7 +448,7 @@ cgraph$public_methods$run <- function(name, values = list())
 #' b <- x$parm(4, name = "b")
 #'
 #' # Perform some operations on the parameters.
-#' c <- sin(a) + cos(b) - tan(a)
+#' c <- cg.sin(a) + cg.cos(b) - cg.tan(a)
 #'
 #' # Differentiate the graph with respect to c.
 #' grads <- x$gradients(c, x$run(c))
@@ -498,7 +498,7 @@ cgraph$public_methods$gradients <- function(name, values = list(), index = 1)
 #' b <- x$parm(4, name = "b")
 #'
 #' # Perform some operations on the parameters.
-#' c <- sin(a) + cos(b) - tan(a)
+#' c <- cg.sin(a) + cg.cos(b) - cg.tan(a)
 #'
 #' # Differentiate the graph with respect to c.
 #' grads <- x$gradients(c, x$run(c))

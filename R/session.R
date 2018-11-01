@@ -16,32 +16,7 @@
 session <- new.env()
 
 # Active graph
-session$graph <- NULL
-
-#' Generate Name
-#'
-#' Generate a default name for a node.
-#'
-#' @note The auto-generated name is not guaranteed to be unique.
-#'
-#' @return character scalar, auto-generated name for the node.
-#'
-#' @examples # Initialize a new computational graph.
-#' x <- cgraph$new()
-#'
-#' # Generate a name.
-#' name()
-#'
-#' @author Ron Triepels
-name <- function()
-{
-  if(is.null(session$graph))
-  {
-    stop("No active graph set", call. = FALSE)
-  }
-
-  session$graph$name()
-}
+session$active <- NULL
 
 #' Add Constant
 #'
@@ -52,9 +27,7 @@ name <- function()
 #'
 #' @note Constants are ignored when differentiating a graph. The intended use of constants is that they are given a fixed value. However, it is still possible to change the value of constants when evaluating or differentiating a graph (see \link[cgraph]{run} and \link[cgraph]{gradients} for more details).
 #'
-#' The name of the constant node cannot be 'grad' as this is a reserved word.
-#'
-#' @return cg.node, constant.
+#' @return cg_node, constant.
 #'
 #' @examples # Initialize a new computational graph.
 #' x <- cgraph$new()
@@ -63,14 +36,17 @@ name <- function()
 #' const(1, name = "c")
 #'
 #' @author Ron Triepels
-const <- function(value, name)
+#' @export
+const <- function(value = NULL, name = NULL)
 {
-  if(is.null(session$graph))
+  active <- session$active
+
+  if(is.null(active))
   {
     stop("No active graph set", call. = FALSE)
   }
 
-  session$graph$const(value, name)
+  active$const(value, name)
 }
 
 #' Add Input
@@ -82,9 +58,7 @@ const <- function(value, name)
 #'
 #' @note The intended use of inputs is that they are not given a fixed value but behave as placeholders. Values can be supplied for inputs when evaluating or differentiating a graph (see \link[cgraph]{run} and \link[cgraph]{gradients} for more details).
 #'
-#' The name of the input node cannot be 'grad' as this is a reserved word.
-#'
-#' @return cg.node, input.
+#' @return cg_node, input.
 #'
 #' @examples # Initialize a new computational graph.
 #' x <- cgraph$new()
@@ -93,14 +67,17 @@ const <- function(value, name)
 #' input(name = "x")
 #'
 #' @author Ron Triepels
-input <- function(value, name)
+#' @export
+input <- function(value = NULL, name = NULL)
 {
-  if(is.null(session$graph))
+  active <- session$active
+
+  if(is.null(active))
   {
     stop("No active graph set", call. = FALSE)
   }
 
-  session$graph$input(value, name)
+  active$input(value, name)
 }
 
 #' Add Parameter
@@ -112,9 +89,7 @@ input <- function(value, name)
 #'
 #' @note Parameters are assumed to be subject to some optimization process. Hence, their value might change over time.
 #'
-#' The name of the parameter node cannot be 'grad' as this is a reserved word.
-#'
-#' @return cg.node, parameter.
+#' @return cg_node, parameter.
 #'
 #' @examples # Initialize a new computational graph.
 #' x <- cgraph$new()
@@ -123,56 +98,128 @@ input <- function(value, name)
 #' parm(1, name = "p")
 #'
 #' @author Ron Triepels
-parm <- function(value, name)
+#' @export
+parm <- function(value = NULL, name = NULL)
 {
-  if(is.null(session$graph))
+  active <- session$active
+
+  if(is.null(active))
   {
     stop("No active graph set", call. = FALSE)
   }
 
-  session$graph$parm(value, name)
+  active$parm(value, name)
 }
 
 #' Add Operation
 #'
-#' Add an operation node to the graph.
+#' Add an operation node to the active graph.
 #'
-#' @param call call or symbol, operation performed by the node. Must evaluate to a numeric vector or array.
-#' @param grads named list of calls, gradients of the input nodes that are consumed by the operation in argument \code{call}. Is ignored when the elements are not named.
-#' @param binding named list or environment, binds the variables in the calls of argument \code{call} and \code{grads} to the symbols of the nodes in the graph.
+#' @param call symbol, operation performed by the node.
+#' @param grads list of symbols, gradients functions of the input nodes that are consumed by the operation in argument \code{call}.
+#' @param args list of cg_node objects, the nodes that are consumed by the operation in argument \code{call}.
 #' @param name character scalar, name of the node (optional). In case argument \code{name} is missing, the node is tried to be added to the graph under an auto-generated name.
 #'
-#' @note The operation to be performed by the node should be provided as a call to argument \code{call}. If this operation consumes any other nodes in the graph, then the gradients of the operation with respect to these input nodes should be supplied as a call to argument \code{gradients}. These gradients must be a function of each input's gradient. The special reserved word 'grad' evaluates to this gradient at run-time and can be used in the call of each input's gradient as placeholder.
+#' @note The operation to be performed by the node should be provided as a symbol to argument \code{call}. If this operation consumes any other nodes in the graph, then the gradient function of the operation with respect to these input nodes should be supplied as a symbol to argument \code{gradients}. These gradients must be a function of each input's gradient. A gradient function must be provided for each input node as specified by argument \code{args}.
 #'
-#' Any variabes in the calls of the node (both supplied to argument \code{call} and \code{gradients}) should be bind to the symbols of the nodes in the graph. This can be done by supplying the names of the variables and the corresponding nodes to which the variables should bind to \code{binding}. At run-time, the symbols of the nodes are substituted for the variables in the calls.
-#'
-#' The name of the operation node cannot be 'grad' as this is a reserved word.
-#'
-#' @return cg.node, operation.
+#' @return cg_node, operation.
 #'
 #' @author Ron Triepels
-opr <- function(call, grads, binding, name)
+#' @export
+opr <- function(call, grads, args, name = NULL)
 {
-  if(is.null(session$graph))
+  active <- session$active
+
+  if(is.null(active))
   {
     stop("No active graph set", call. = FALSE)
   }
 
-  session$graph$opr(call, grads, binding, name)
+  active$opr(call, grads, args, name)
+}
+
+#' Evaluate a Node in the Graph
+#'
+#' Evaluate node \code{name} in the active graph.
+#'
+#' @param name character scalar, name of the node that is evaluated.
+#'
+#' @note The values of all nodes are cached for performance reasons. Only those nodes needed to compute node \code{name} and that have not yet been retrieved by \link[cgraph]{val} are computed.
+#'
+#' @return R object, the value of the node.
+#'
+#' @examples # Initialize a new computational graph.
+#' x <- cgraph$new()
+#'
+#' # Add a parameter
+#' a <- parm(20, name = "a")
+#'
+#' # Evaluate a
+#' val(a)
+#'
+#' @author Ron Triepels
+#' @export
+val <- function(name)
+{
+  active <- session$active
+
+  if(is.null(active))
+  {
+    stop("No active graph set", call. = FALSE)
+  }
+
+  active$val(name)
+}
+
+#' Change the Value of a Node in the Graph
+#'
+#' Change the value of node \code{name} in the active graph.
+#'
+#' @param name character scalar, name of the node that is changed.
+#' @param value R object, new value of the node.
+#'
+#' @note The cached value of all nodes that directly or indirectly dependend on node \code{name} is removed. The value of these nodes will be re-computed the next time \link[cgraph]{val} is called.
+#'
+#' @return nothing.
+#'
+#' @examples # Initialize a new computational graph.
+#' x <- cgraph$new()
+#'
+#' # Add a parameter
+#' a <- parm(20, name = "a")
+#'
+#' # Change value of a
+#' set(a, 40)
+#'
+#' # Evaluate a
+#' val(a)
+#'
+#' @author Ron Triepels
+#' @export
+set <- function(name, value)
+{
+  active <- session$active
+
+  if(is.null(active))
+  {
+    stop("No active graph set", call. = FALSE)
+  }
+
+  active$set(name, value)
 }
 
 #' Evaluate the Graph
 #'
 #' Evaluate node \code{name} in the active graph.
 #'
-#' @param name character scalar or symbol, name of the node that is evaluated.
+#' @param name character scalar, name of the node that is evaluated.
 #' @param values named list or environment, values that are subsituted for the nodes in the graph.
 #'
-#' @note All nodes required to compute node \code{name} must have a value or their value must be able to be computed at run-time. Nodes can be assigned a value when they are created. Alternatively, argument \code{values} can be used to substitute values for nodes that do not have a value (e.g. inputs) or to fix their values.
+#' @note All nodes required to compute node \code{name} must have a value or their value must be able to be computed at run-time. Nodes can be assigned a value when they are created or by calling method \link[cgraph]{set}. Alternatively, argument \code{values} can be used to substitute values for nodes that do not have a value (e.g. inputs) or to fix their values.
 #'
-#' Only those nodes needed to compute node \code{name} are evaluated and their values are returned. Values of nodes that have not changed or are not evaluated are not returned.
+#' Only those nodes needed to compute node \code{name} are evaluated and their values are returned. Values of operation nodes that are cached by function \link[cgraph]{val} are ignored and re-computed.
 #'
-#' @return environment, the value of node \code{name} including the values of all ancestors of \code{name}.
+#' @return environment, the value of node \code{name} including the value of all ancestors of \code{name}.
 #'
 #' @examples # Initialize a new computational graph.
 #' x <- cgraph$new()
@@ -181,7 +228,7 @@ opr <- function(call, grads, binding, name)
 #' a <- input(name = "a")
 #'
 #' # Square the input (i.e. b = a^2).
-#' b <- cg.pow(a, const(2), name = "b")
+#' b <- cg_pow(a, const(2), name = "b")
 #'
 #' # Evaluate b at a = 2.
 #' values <- run(b, list(a = 2))
@@ -190,21 +237,24 @@ opr <- function(call, grads, binding, name)
 #' values$b
 #'
 #' @author Ron Triepels
+#' @export
 run <- function(name, values = list())
 {
-  if(is.null(session$graph))
+  active <- session$active
+
+  if(is.null(active))
   {
     stop("No active graph set", call. = FALSE)
   }
 
-  session$graph$run(name, values)
+  active$run(name, values)
 }
 
 #' Calculate Gradients
 #'
 #' Differentiate the active graph with respect to node \code{name} by reverse automatic differentiation.
 #'
-#' @param name character scalar or symbol, name of the node that is differentiated.
+#' @param name character scalar, name of the node that is differentiated.
 #' @param values named list or environment, values that are subsituted for the nodes in the graph.
 #' @param index numeric scalar, index of the target node that is differentiated. Defaults to the first element.
 #'
@@ -212,7 +262,7 @@ run <- function(name, values = list())
 #'
 #' Currently, the cgraph package can only differentiate scalar target nodes. In case the value of target node \code{name} is a vector or an array, argument \code{index} can be used to specify which element of the vector or array is to be differentiated.
 #'
-#' The gradients of all ancestor nodes of node \code{name} are returned. Constant nodes are not differentiated and their gradients are not returned. The gradients have the same shape as the nodes.
+#' The gradients of all ancestors or \code{name} are returned. Constant nodes are not differentiated and their gradients are not returned. The gradients have the same shape as the values of the nodes.
 #'
 #' @return environment, the gradients of all nodes with respect to target node \code{name}.
 #'
@@ -224,7 +274,7 @@ run <- function(name, values = list())
 #' b <- parm(4, name = "b")
 #'
 #' # Perform some operations on the parameters.
-#' c <- cg.sin(a) + cg.cos(b) - cg.tan(a)
+#' c <- cg_sin(a) + cg_cos(b) - cg_tan(a)
 #'
 #' # Differentiate the graph with respect to c.
 #' grads <- gradients(c, run(c))
@@ -233,60 +283,15 @@ run <- function(name, values = list())
 #' grads$a
 #'
 #' @author Ron Triepels
-gradients <- function(name, values = list(), index = 1)
+#' @export
+gradients <- function(name, values = new.env(), index = 1)
 {
-  if(is.null(session$graph))
+  active <- session$active
+
+  if(is.null(active))
   {
     stop("No active graph set", call. = FALSE)
   }
 
-  session$graph$gradients(name, values, index)
-}
-
-#' Approximate Gradients
-#'
-#' Differentiate node \code{x} with respect to node \code{y} in the active graph by numerical differentiation.
-#'
-#' @param x character scalar or symbol, name of the node.
-#' @param y character scalar or symbol, name of the node.
-#' @param values named list or environment, values that are subsituted for the nodes in the graph.
-#' @param index numeric scalar, index of the target node that is differentiated. Defaults to the first element.
-#' @param eps numeric scalar, step size. Defaults to 1e-4.
-#'
-#' @note All nodes required to compute node \code{name} must have a value, or their value must be able to be computed at run-time. The values of nodes can be obtained by first evaluating node \code{name} in the graph using function \code{$run()}. The values obtained by this function for the nodes can then be supplied to argument \code{values}.
-#'
-#' The graph is differentiation by the symmetric difference quotient. This method can only be used to differentiate scalars. In case the value of target node \code{name} is a vector or an array, argument \code{index} can be used to specify which element of the vector or array is differentiated. The caluclated gradient has the same shape as the value of node \code{y}.
-#'
-#' Numerical differentiation is subject to estimation error and can be very slow. Therefore, this function should only be used for testing purposes.
-#'
-#' @return numeric vector or array, the derivative of \code{x} with respect to \code{y}.
-#'
-#' @examples # Initialize a new computational graph.
-#' x <- cgraph$new()
-#'
-#' # Add some parameters.
-#' a <- parm(2, name = "a")
-#' b <- parm(4, name = "b")
-#'
-#' # Perform some operations on the parameters.
-#' c <- cg.sin(a) + cg.cos(b) - cg.tan(a)
-#'
-#' # Differentiate the graph with respect to c.
-#' grads <- gradients(c, run(c))
-#'
-#' # Retrieve the gradient of c with respect to a.
-#' grads$a
-#'
-#' # Approximate the same gradient with numerical differentiation.
-#' approx.grad(c, a)
-#'
-#' @author Ron Triepels
-approx.grad <- function(x, y, values = list(), index = 1, eps = 1e-4)
-{
-  if(is.null(session$graph))
-  {
-    stop("No active graph set", call. = FALSE)
-  }
-
-  session$graph$approx.grad(x, y, values, index, eps)
+  active$gradients(name, values, index)
 }

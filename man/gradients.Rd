@@ -4,10 +4,10 @@
 \alias{gradients}
 \title{Calculate Gradients}
 \usage{
-gradients(name, values = list(), index = 1)
+gradients(name, values = new.env(), index = 1)
 }
 \arguments{
-\item{name}{character scalar or symbol, name of the node that is differentiated.}
+\item{name}{character scalar, name of the node that is differentiated.}
 
 \item{values}{named list or environment, values that are subsituted for the nodes in the graph.}
 
@@ -24,7 +24,7 @@ All nodes required to compute node \code{name} must have a value, or their value
 
 Currently, the cgraph package can only differentiate scalar target nodes. In case the value of target node \code{name} is a vector or an array, argument \code{index} can be used to specify which element of the vector or array is to be differentiated.
 
-The gradients of all ancestor nodes of node \code{name} are returned. Constant nodes are not differentiated and their gradients are not returned. The gradients have the same shape as the nodes.
+The gradients of all ancestors or \code{name} are returned. Constant nodes are not differentiated and their gradients are not returned. The gradients have the same shape as the values of the nodes.
 }
 \examples{
 # Initialize a new computational graph.
@@ -35,7 +35,7 @@ a <- parm(2, name = "a")
 b <- parm(4, name = "b")
 
 # Perform some operations on the parameters.
-c <- cg.sin(a) + cg.cos(b) - cg.tan(a)
+c <- cg_sin(a) + cg_cos(b) - cg_tan(a)
 
 # Differentiate the graph with respect to c.
 grads <- gradients(c, run(c))

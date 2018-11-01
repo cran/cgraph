@@ -4,7 +4,7 @@
 \alias{const}
 \title{Add Constant}
 \usage{
-const(value, name)
+const(value = NULL, name = NULL)
 }
 \arguments{
 \item{value}{numeric vector or array, value of the node (optional).}
@@ -12,15 +12,13 @@ const(value, name)
 \item{name}{character scalar, name of the node (optional). In case argument \code{name} is missing, the node is tried to be added to the graph under an auto-generated name.}
 }
 \value{
-cg.node, constant.
+cg_node, constant.
 }
 \description{
 Add a constant node to the active graph.
 }
 \note{
 Constants are ignored when differentiating a graph. The intended use of constants is that they are given a fixed value. However, it is still possible to change the value of constants when evaluating or differentiating a graph (see \link[cgraph]{run} and \link[cgraph]{gradients} for more details).
-
-The name of the constant node cannot be 'grad' as this is a reserved word.
 }
 \examples{
 # Initialize a new computational graph.

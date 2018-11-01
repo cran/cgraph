@@ -4,7 +4,7 @@
 \alias{input}
 \title{Add Input}
 \usage{
-input(value, name)
+input(value = NULL, name = NULL)
 }
 \arguments{
 \item{value}{numeric vector or array, value of the node (optional).}
@@ -12,15 +12,13 @@ input(value, name)
 \item{name}{character scalar, name of the node (optional). In case argument \code{name} is missing, the node is tried to be added to the graph under an auto-generated name.}
 }
 \value{
-cg.node, input.
+cg_node, input.
 }
 \description{
 Add an input node to the active graph.
 }
 \note{
 The intended use of inputs is that they are not given a fixed value but behave as placeholders. Values can be supplied for inputs when evaluating or differentiating a graph (see \link[cgraph]{run} and \link[cgraph]{gradients} for more details).
-
-The name of the input node cannot be 'grad' as this is a reserved word.
 }
 \examples{
 # Initialize a new computational graph.

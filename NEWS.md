@@ -1,3 +1,28 @@
+cgraph 3.0.0
+----------------------------------------------------------------
+
+Comments:
+
+* Large parts of the C-API have been reworked.
+* Some naming conventions have changed. Individual names in the name of a function are now separated with an underscore (_) instead of a dot (.). For example, operator `cg.matmul` is now named `cg_matmul`. The same rule applies to class names. For example, class `cg.node` is now named `cg_node`.
+* Function `name` is removed. Names for nodes are now generated internally in the C-API.
+* Function `approx.gradients` is removed. A simliar function is still available as `cgraph:::approx_grad` in the package namespace. However, it should be noted that this function is not well-optimized and should only be used for testing purposes.
+* Calling `print` on a `cg_node` object no longer prints the value of the node. Use function `val` to evaluate a node.
+
+Features:
+
+* The initialization method of a cgraph object has a new argument `library` which can be used to specify which function library the graph uses.
+* The calls of functions and their corresponding gradient functions are now build at run-time. This potentially allows operators to accept a variable number of arguments.
+* Added function `val` and `set` to retrieve or set the value of a node respectively.
+* A node can now also be named 'grad'. 'grad' is no longer a reserved word.
+* Operator `cg_mean` now calls the base `mean` function.
+* Operator `cg_crossprod` and `cg_tcrossprod` now allow argument `y` to be missing (similarly as the corresponding base functions).
+* Argument `dim` of operator `cg_reshape` now expects an `cg_node` object instead of an integer scalar or vector that holds the new array dimensions.
+
+Bug fixes:
+
+* Fixed a bug that caused a segfault when using cgraph in RStudio on Red Hat Enterprise Linux.
+
 cgraph 2.0.3
 ----------------------------------------------------------------
 
@@ -8,7 +33,7 @@ Comments:
 Bug fixes:
 
 * Operator `sigmoid` now correctly handles numerical underflow.
-* Operators `cg.pmax` and `cg.pmin` are now correctly differentiated when arguments `x` and `y` are both arrays.
+* Operator `cg.pmax` and `cg.pmin` are now correctly differentiated when argument `x` and `y` are both arrays.
 
 Features:
 

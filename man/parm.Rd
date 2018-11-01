@@ -4,7 +4,7 @@
 \alias{parm}
 \title{Add Parameter}
 \usage{
-parm(value, name)
+parm(value = NULL, name = NULL)
 }
 \arguments{
 \item{value}{numeric vector or array, value of the node (optional).}
@@ -12,15 +12,13 @@ parm(value, name)
 \item{name}{character scalar, name of the node (optional). In case \code{name} is missing, the node is tried to be added to the graph under an auto-generated name.}
 }
 \value{
-cg.node, parameter.
+cg_node, parameter.
 }
 \description{
 Add a parameter node to the active graph.
 }
 \note{
 Parameters are assumed to be subject to some optimization process. Hence, their value might change over time.
-
-The name of the parameter node cannot be 'grad' as this is a reserved word.
 }
 \examples{
 # Initialize a new computational graph.

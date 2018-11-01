@@ -17,27 +17,33 @@ limitations under the License.
 #include <R.h>
 #include <Rinternals.h>
 
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "stack.h"
 
-stack stack_init(int size)
+stack* stack_allocate(int size)
 {
+  stack *s;
+
   int *data;
 
-  stack s;
+  if(size < 0)
+  {
+    Rf_errorcall(R_NilValue, "invalid stack size provided");
+  }
+
+  s = malloc(sizeof(stack));
 
   data = malloc(size * sizeof(int));
 
-  if(data == NULL)
+  if(s == NULL || data == NULL)
   {
-    Rf_errorcall(R_NilValue, "insufficient memory to allocate stack of %d elements", size);
+    Rf_errorcall(R_NilValue, "unable to allocate stack of %d elements", size);
   }
 
-  s.top = -1;
-  s.size = size;
-  s.data = data;
+  s->top = -1;
+  s->size = size;
+  s->data = data;
 
   return s;
 }
@@ -45,10 +51,7 @@ stack stack_init(int size)
 void stack_destroy(stack *s)
 {
   free(s->data);
-
-  s->top = -1;
-  s->size = 0;
-  s->data = NULL;
+  free(s);
 }
 
 int stack_is_empty(stack *s)
@@ -61,28 +64,35 @@ int stack_is_full(stack *s)
   return s->top >= s->size - 1;
 }
 
-void stack_push(stack *s, int x)
+void stack_add(stack *s, int x)
 {
   if(stack_is_full(s))
   {
-    s->data = realloc(s->data, 2 * s->size * sizeof(int));
+    if(s->size == 0)
+    {
+      s->size = 1;
+    }
+    else
+    {
+      s->size *= 2;
+    }
+
+    s->data = realloc(s->data, s->size * sizeof(int));
 
     if(s->data == NULL)
     {
-      Rf_errorcall(R_NilValue, "insufficient memory to reallocate stack of %d elements", 2 * s->size);
+      Rf_errorcall(R_NilValue, "unable to reallocate stack of %d elements", s->size);
     }
-
-    s->size *= 2;
   }
 
   s->data[++s->top] = x;
 }
 
-int stack_peek(stack *s)
+int stack_current(stack *s)
 {
   if(stack_is_empty(s))
   {
-    Rf_errorcall(R_NilValue, "stack is empty");
+    Rf_errorcall(R_NilValue, "unable to retrieve the current element of the stack because it is empty");
   }
 
   return s->data[s->top];
@@ -92,17 +102,17 @@ void stack_remove(stack *s)
 {
   if(stack_is_empty(s))
   {
-    Rf_errorcall(R_NilValue, "stack is empty");
+    Rf_errorcall(R_NilValue, "unable to remove the top element of the stack because it is empty");
   }
 
   s->top--;
 }
 
-int stack_pop(stack *s)
+int stack_get(stack *s)
 {
   if(stack_is_empty(s))
   {
-    Rf_errorcall(R_NilValue, "stack is empty");
+    Rf_errorcall(R_NilValue, "unable to get the first element of the stack because it is empty");
   }
 
   return s->data[s->top--];

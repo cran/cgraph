@@ -20,7 +20,7 @@ typedef struct {
   int *data;
 } stack;
 
-stack stack_init(int maxSize);
+stack* stack_allocate(int size);
 
 void stack_destroy(stack *s);
 
@@ -28,10 +28,10 @@ int stack_is_empty(stack *s);
 
 int stack_is_full(stack *s);
 
-void stack_push(stack *s, int x);
+void stack_add(stack *s, int x);
 
-int stack_peek(stack *s);
+int stack_current(stack *s);
 
 void stack_remove(stack *s);
 
-int stack_pop(stack *s);
+int stack_get(stack *s);

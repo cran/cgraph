@@ -1,9 +1,9 @@
-00882363bf6726f7cdc656cbd1e4bcfb *DESCRIPTION
+b2042660c5e656a3d8b73b3268f4fd70 *DESCRIPTION
 fa809698d155947f052019740b553110 *NAMESPACE
-b8380b7b0a72e1abe41ceb277dd96e4e *NEWS.md
+7d1362d05055f18b0e19170868f52a7d *NEWS.md
 87370071c83a69dc5a72643ed7e89389 *R/cgraph.R
 5b3d7ee9e9aae4ca87731f1bc0c087b3 *R/internal.R
-dc8d4f3e1bf692c86942e0bbb4a931ea *R/library.R
+04038ea29aaadaf8121256d20ef7fb87 *R/library.R
 93b10dca6ae12862c17e395a0193fd22 *R/operators.R
 2522ea096868f92917acea82e4cf23c5 *R/session.R
 434084fdf33f0c2e8b7ccd58fd4cadcf *R/zzz.R
@@ -38,7 +38,7 @@ f0fe76bbefb415e0cbd5d55c93deace0 *man/cg_const.Rd
 9aecc4910419620f1470014594b3abff *man/cg_cos.Rd
 f5e69e266bf6324a251dde23966ab7bc *man/cg_cosh.Rd
 66b2f0e74a5e8b4d1061bb91a22fe64e *man/cg_crossprod.Rd
-355d6867b5e5f53e799e650a0c6540e5 *man/cg_default_library.Rd
+dd9e0ff08307a7ee7d4cd3863089d833 *man/cg_default_library.Rd
 83a4967f8820923b239a48770ad2ec3c *man/cg_div.Rd
 405053c26fc4dbcc5a460e9c86ec73ff *man/cg_equal.Rd
 1354af8811bfa43bac6fb05cb29cf048 *man/cg_exp.Rd

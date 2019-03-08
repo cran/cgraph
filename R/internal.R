@@ -1,4 +1,4 @@
-# Copyright 2018 Ron Triepels
+# Copyright 2019 Ron Triepels
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,65 +14,48 @@
 
 #' Block Summation
 #'
-#' Divide a vector or array in consecutive blocks of \code{n} elements and sum the elements at each position in these blocks.
+#' Divide a vector or array in consecutive fixed-sized blocks and sum the elements at each position in these blocks.
 #'
 #' @param x, numeric vector or array, the object that is summed.
-#' @param n, numeric scalar, block size. Defaults to 1.
+#' @param block_size, numeric scalar, the size of each block. Defaults to 1.
 #'
-#' @note If \code{x} is an array and \code{n} is equal to the size of \code{x}'s first dimension, then \link[cgraph]{bsum} behaves as \link[base:colSums]{rowSums}.
+#' @note If \code{x} is an array and \code{block_size} is equal to the size of \code{x}'s first dimension, then \link[cgraph]{bsum} behaves as \link[base:colSums]{rowSums}.
 #'
-#' @return numeric vector, a \code{n}-dimensional vector, where the 1th element of the vector is the sum of each 1th element of the blocks, the 2nd element of the vector is the sum of each 2nd element of the blocks, and so on.
+#' @return numeric vector. Each 1th element of the vector is the sum of each 1th element of the blocks, the 2nd element of the vector is the sum of each 2nd element of the blocks, and so on.
 #'
 #' @author Ron Triepels
 #' @keywords internal
-bsum <- function(x, n = 1)
+bsum <- function(x, block_size = 1)
 {
-  .Call("bsum", x, n, PACKAGE = "cgraph")
+  .Call("bsum", x, block_size, PACKAGE = "cgraph")
 }
 
 #' Approximate Gradients
 #'
-#' Differentiate node \code{x} with respect to node \code{y} by numerical differentiation.
+#' Differentiate a graph with respect to a given target node by numerical differentiation.
 #'
-#' @param x character scalar, name of the node.
-#' @param y character scalar, name of the node.
+#' @param graph cg_graph object, graph that is differentiated.
+#' @param target cg_node object, node in the graph that is differentiated.
+#' @param values named list or environment, values that are subsituted for the input nodes in the graph.
 #' @param index numeric scalar, index of the target node that is differentiated. Defaults to the first element.
 #' @param eps numeric scalar, step size. Defaults to 1e-4.
 #'
-#' @note All nodes required to compute node \code{name} must have a value, or their value must be able to be computed at run-time.
+#' @note All nodes required to compute the target node must have a value, or their value must be able to be computed at run-time. The values of the nodes can be obtained by first evaluating function \link[cgraph]{cg_graph_run}. The values obtained by this function for the nodes can then be supplied to argument \code{values}.
 #'
-#' The graph is differentiation by the symmetric difference quotient. This method can only be used to differentiate scalars. In case the value of target node \code{name} is a vector or an array, argument \code{index} can be used to specify which element of the vector or array is differentiated. The caluclated gradient has the same shape as node \code{y}.
+#' The graph is differentiation by the symmetric difference quotient. This method can only be used to differentiate scalars. In case the value of the target node is a vector or an array, argument \code{index} can be used to specify which element of the vector or array is differentiated. The gradients have the same shape as the values of the nodes.
 #'
 #' Numerical differentiation is subject to estimation error and can be very slow. Therefore, this function should only be used for testing purposes.
 #'
-#' @return numeric vector or array, the derivative of \code{x} with respect to \code{y}.
+#' @return environment, the gradients of all ancestors of the node (including the target node itself) with respect to the target node.
 #'
 #' @author Ron Triepels
 #' @keywords internal
-approx_grad <- function(x, y, index = 1, eps = 1e-4)
+approx_gradients <- function(graph, target, values = new.env(), index = 1, eps = 1e-4)
 {
-  grad <- y.value <- val(y)
-
-  for(i in 1:length(grad))
+  if(is.list(values))
   {
-    y.value[i] <- y.value[i] + eps
-
-    set(y, y.value)
-
-    x.value1 <- val(x)[index]
-
-    y.value[i] <- y.value[i] - 2 * eps
-
-    set(y, y.value)
-
-    x.value2 <- val(x)[index]
-
-    y.value[i] <- y.value[i] + eps
-
-    set(y, y.value)
-
-    grad[i] <- (x.value1 - x.value2) / (2 * eps)
+    values <- list2env(values)
   }
 
-  grad
+  .Call("approx_gradients", graph, target, values, new.env(), index, eps, PACKAGE = "cgraph")
 }

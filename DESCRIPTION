@@ -1,7 +1,7 @@
 Package: cgraph
 Type: Package
 Title: Computational Graphs
-Version: 4.0.0
+Version: 4.0.1
 Author: Ron Triepels
 Maintainer: Ron Triepels <dev@cgraph.org>
 URL: https://cgraph.org/
@@ -11,8 +11,8 @@ License: Apache License 2.0
 Encoding: UTF-8
 LazyData: true
 Suggests: testthat
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 NeedsCompilation: yes
-Packaged: 2019-03-08 09:32:12 UTC; ron
+Packaged: 2019-03-11 08:23:30 UTC; ron
 Repository: CRAN
-Date/Publication: 2019-03-08 09:52:44 UTC
+Date/Publication: 2019-03-11 08:42:46 UTC

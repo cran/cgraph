@@ -44,7 +44,7 @@ SEXP sigmoid(SEXP x)
   {
     case REALSXP :
     {
-      const double *a = REAL_RO(x);
+      double *a = REAL(x);
 
       for(int i = 0; i < n; i++)
       {
@@ -54,6 +54,24 @@ SEXP sigmoid(SEXP x)
 
         b[i] = (b[i] > max) ? max : b[i];
       }
+
+      break;
+    }
+    case LGLSXP :
+    case INTSXP :
+    {
+      int *a = INTEGER(x);
+
+      for(int i = 0; i < n; i++)
+      {
+        b[i] = 1 / (1 + exp(-a[i]));
+
+        b[i] = (b[i] < min) ? min : b[i];
+
+        b[i] = (b[i] > max) ? max : b[i];
+      }
+
+      break;
     }
   }
 

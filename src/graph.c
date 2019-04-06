@@ -60,7 +60,7 @@ char* cg_graph_gen_name(SEXP graph)
 
   if(TYPEOF(nodes) != VECSXP)
   {
-    strcpy(name, "x1");
+    strcpy(name, "v1");
   }
   else
   {
@@ -68,7 +68,7 @@ char* cg_graph_gen_name(SEXP graph)
 
     do
     {
-      sprintf(name, "x%d", ++n);
+      sprintf(name, "v%d", ++n);
 
     } while (cg_graph_node_exists(graph, name));
   }
@@ -260,6 +260,8 @@ SEXP cg_graph_forward_dep(SEXP graph, SEXP target)
 
   SETLENGTH(dep, m);
 
+  free(visited);
+
   UNPROTECT(1);
 
   return dep;
@@ -349,6 +351,8 @@ SEXP cg_graph_backward_dep(SEXP graph, SEXP target)
 
   SETLENGTH(dep, m);
 
+  free(visited);
+
   UNPROTECT(1);
 
   return dep;
@@ -383,7 +387,7 @@ SEXP cg_graph_run(SEXP graph, SEXP target, SEXP values)
   {
     SEXP node = VECTOR_ELT(dep, i);
 
-    if(!cg_is(node, "cg_input"))
+    if(cg_node_type(node) != CGIPT)
     {
       cg_node_eval(node, values);
     }
@@ -416,12 +420,10 @@ SEXP cg_graph_gradients(SEXP graph, SEXP target, SEXP values, SEXP gradients, SE
     Rf_errorcall(R_NilValue, "argument 'gradients' must be an environment");
   }
 
-  if(!Rf_isNumeric(index) || Rf_xlength(index) < 1)
+  if(!Rf_isNull(index) && (!Rf_isNumeric(index) || Rf_xlength(index) < 1))
   {
-    Rf_errorcall(R_NilValue, "argument 'index' must be a numeric scalar");
+    Rf_errorcall(R_NilValue, "argument 'index' must be NULL or a numeric scalar");
   }
-
-  int k = Rf_asInteger(index);
 
   SEXP dep = PROTECT(cg_graph_backward_dep(graph, target));
 
@@ -443,16 +445,31 @@ SEXP cg_graph_gradients(SEXP graph, SEXP target, SEXP values, SEXP gradients, SE
 
     R_len_t m = Rf_xlength(value);
 
-    if(k < 1 || k > m)
-    {
-      Rf_errorcall(R_NilValue, "cannot differentiate node '%s' at index %d", cg_node_name(root), k);
-    }
-
     SEXP gradient = PROTECT(Rf_allocVector(REALSXP, m));
 
-    memset(REAL(gradient), 0, m * sizeof(double));
+    double *y = REAL(gradient);
 
-    REAL(gradient)[k - 1] = 1;
+    memset(y, 0, m * sizeof(double));
+
+    if(!Rf_isNull(index))
+    {
+      int k = Rf_asInteger(index);
+
+      if(k < 1 || k > m)
+      {
+        Rf_errorcall(R_NilValue, "cannot differentiate node '%s' at index %d",
+                     cg_node_name(root), k);
+      }
+
+      y[k - 1] = 1;
+    }
+    else
+    {
+      for(int i = 0; i < m; i++)
+      {
+        y[i] = 1;
+      }
+    }
 
     SHALLOW_DUPLICATE_ATTRIB(gradient, value);
 
@@ -462,7 +479,9 @@ SEXP cg_graph_gradients(SEXP graph, SEXP target, SEXP values, SEXP gradients, SE
     {
       SEXP node = VECTOR_ELT(dep, i);
 
-      if(cg_is(node, "cg_operator") || cg_is(node, "cg_parameter"))
+      int type = cg_node_type(node);
+
+      if(type == CGOPR || type == CGPRM)
       {
         cg_node_eval_gradient(node, values, gradients);
       }

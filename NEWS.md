@@ -1,9 +1,24 @@
+cgraph 4.0.2
+----------------------------------------------------------------
+
+Comments:
+
+* The default name of a node is now `v` followed by the node id.
+* The classes for the node types (i.e. constant, parameter, input, and operator) are removed. Instead, the node type is stored as an integer attribute in a `cg_node` object for efficiency reasons.
+* Argument `index` of function `cg_graph_gradients` can now also be `NULL` to differentiate nodes element-wise. This is now also the default behavior.
+
+Bug fixes:
+
+* Fixed memory leak when performing a forward pass and backward pass using function `cg_graph_run` and `cg_graph_gradients` respectively.
+* Function `bsum` now prints a correct error message when argument `block_size` is not a numerical scalar.
+
 cgraph 4.0.1
 ----------------------------------------------------------------
 
 Bug fixes:
+
 * Fixed an bug that caused an error when installing `cgraph` on R versions before 3.5.
-* Function 'cg_session_set_graph' no longer prints `NULL` to the console when the active graph is changed. 
+* Function `cg_session_set_graph` no longer prints `NULL` to the console when the active graph is changed. 
 * Operator `cg_sigmoid` now works correctly when argument `x` is a logical or integer vector or array.
 
 cgraph 4.0.0
@@ -12,17 +27,18 @@ cgraph 4.0.0
 Comments:
 
 * The C-API has been completely reworked.
-* The R6 class `cgraph` is removed. To create a new computational graph, use function `cg_graph` instead.
+* The R6 class `cgraph` is removed. To create a computational graph, use function `cg_graph` instead.
 * Method `get_parms` and `add_parms` are no longer available.
-* Method `active` is no longer available. The active graph can now be retrieved and changed by function `cg_session_graph` and `cg_session_set_graph` respectively.
-* Method `adj_mat` is no longer available.
+* Method `active` is removed. The active graph can now be retrieved and changed by function `cg_session_graph` and `cg_session_set_graph` respectively.
+* Method `adj_mat` is removed.
+* S3 overloaded method `print` is removed.
 * Function `const`, `input`, `parm`, and `opr` have been renamed to `cg_constant`, `cg_input`, `cg_parameter`, and `cg_operator` respectively.
-* Function `val` and `set` are removed. The value of a constant or parameter node can be changed directly by calling `x$value` where `x` is the environment of a `cg_node` object.
+* Function `val` and `set` are removed. The value of a constant or parameter node can be retrieved or changed directly by calling `x$value` where `x` is the environment of a `cg_node` object.
 * Function `run` and `gradients` have been renamed to `cg_graph_run` and `cg_graph_gradients` respectively.
 
 Features:
 
-* The function that is called by an operator node is no longer stored as a symbol in the environment of the operator. Instead, each function now has its own global `cg_function` object which can be linked to an operator node. This significantly reduces the size of a `cg_graph` object.
+* The function that is called by an operator is no longer stored as a symbol in the environment of the operator. Instead, each function now has its own global `cg_function` object which can be linked to an operator. This significantly reduces the size of a `cg_graph` object.
 
 Documentation:
 
@@ -39,7 +55,7 @@ cgraph 3.0.1
 
 Bug fixes:
 
-* Fixed a bug that caused S3 methods called by the graph operators to dispatch incorrectly on R versions before 3.5.
+* Fixed a bug that caused S3 methods called by operators to dispatch incorrectly on R versions before 3.5.
 
 cgraph 3.0.0
 ----------------------------------------------------------------

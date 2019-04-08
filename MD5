@@ -1,6 +1,6 @@
-3ae37ecf19976fe74abdd4c6d27a739a *DESCRIPTION
+4c793524d1fc895b9a01b6852459540e *DESCRIPTION
 03129a845631b0f37832d2658582e76a *NAMESPACE
-2382c024612a86ae1590cede81802857 *NEWS.md
+187723d18d9484dc9c682c960efac414 *NEWS.md
 b672c2b86c5799383ac8e296a87bfda3 *R/array.R
 9ce43a09c5fd4d3b3112ee85767dc5f2 *R/function.R
 59ae49c19f9b0e0ed42d34c73fc9ba73 *R/graph.R
@@ -74,7 +74,7 @@ cde5aa5453b03935dcfea0d50190df79 *src/graph.h
 55838dc617d405d87764d5679643bb95 *src/internal.h
 b98cb2ea2e78b6d7f29f0b4ab1779180 *src/math.c
 ab49fdb8ed317d97473360fb1ce3ae71 *src/math.h
-d04c16cde9f0c463e936f291618b429f *src/node.c
+94e35f40b9722a0143d11a54b23c907b *src/node.c
 be5c763ce8aa1a7381ddfc6747c6a22c *src/node.h
 ddeeedfae9d852b38e6988fe4f124f98 *src/session.c
 fe67a47cdb95dbacf69f53bf9dfe65d4 *src/session.h

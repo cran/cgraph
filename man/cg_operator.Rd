@@ -20,11 +20,13 @@ cg_node object.
 Add an operation node to the active graph.
 }
 \note{
-Any objects that are supplied to argument \code{inputs} that are not cg_node objects are implicitly converted to cg_constant objects.
+Argument \code{name} is deprecated and will be removed in the next major release.
+
+Any objects that are supplied to argument \code{inputs} that are not cg_node objects are implicitly coerced to cg_constant objects.
 }
 \examples{
 # Initialize a computational graph
-x <- cg_graph()
+graph <- cg_graph()
 
 # Create a custom negation function
 f <- cg_function(

@@ -36,17 +36,19 @@ void cg_graph_add_node(SEXP graph, SEXP node);
 
 SEXP cg_graph_get_node(SEXP graph, const int id);
 
-SEXP cg_graph_forward_dep(SEXP graph, SEXP target);
-
-SEXP cg_graph_backward_dep(SEXP graph, SEXP target);
+SEXP cg_graph_reverse_dfs(SEXP graph, SEXP target); /* NOTE: DEPRECATED */
 
 /*
  * PUBLIC METHODS
  */
 
-SEXP cg_graph_run(SEXP graph, SEXP target, SEXP values);
+SEXP cg_graph_forward(SEXP graph, SEXP target);
 
-SEXP cg_graph_gradients(SEXP graph, SEXP target, SEXP values, SEXP gradients, SEXP index);
+SEXP cg_graph_backward(SEXP graph, SEXP target, SEXP index);
+
+SEXP cg_graph_run(SEXP graph, SEXP target, SEXP values); /* NOTE: DEPRECATED */
+
+SEXP cg_graph_gradients(SEXP graph, SEXP target, SEXP values, SEXP gradients, SEXP index); /* NOTE: DEPRECATED */
 
 /*
  * PUBLIC CONSTRUCTORS

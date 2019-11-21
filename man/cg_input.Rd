@@ -16,14 +16,17 @@ cg_node object.
 Add an input node to the active graph.
 }
 \note{
-Inputs cannot be assigned a fixed value but behave as placeholders. Values can be assigned to inputs when evaluating or differentiating a graph (see \link[cgraph]{cg_graph_run} and \link[cgraph]{cg_graph_gradients} for more details).
+Inputs cannot be assigned a value upon creation. Instead, they behave as placeholders. You can use data member \code{value} of a cg_node object to retrieve or change its value.
 }
 \examples{
 # Initialize a computational graph
-x <- cg_graph()
+graph <- cg_graph()
 
-# Add a parameter with name 'a' to the graph.
+# Add an input with name 'a' to the graph.
 a <- cg_input(name = "a")
+
+# Set the value to 2
+a$value <- 2
 
 }
 \author{

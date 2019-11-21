@@ -40,8 +40,10 @@ static const R_CallMethodDef CallEntries[] = {
   {"cg_operator", (DL_FUNC) &cg_operator, 3},
   // Graph
   {"cg_graph", (DL_FUNC) &cg_graph, 0},
-  {"cg_graph_run", (DL_FUNC) &cg_graph_run, 3},
-  {"cg_graph_gradients", (DL_FUNC) &cg_graph_gradients, 5},
+  {"cg_graph_forward", (DL_FUNC) &cg_graph_forward, 2},
+  {"cg_graph_backward", (DL_FUNC) &cg_graph_backward, 3},
+  {"cg_graph_run", (DL_FUNC) &cg_graph_run, 3}, /* NOTE: DEPRECATED */
+  {"cg_graph_gradients", (DL_FUNC) &cg_graph_gradients, 5}, /* NOTE: DEPRECATED */
   // Function
   {"cg_function", (DL_FUNC) &cg_function, 2},
   // Session
@@ -49,7 +51,7 @@ static const R_CallMethodDef CallEntries[] = {
   {"cg_session_set_graph", (DL_FUNC) &cg_session_set_graph, 1},
   // Internal
   {"bsum", (DL_FUNC) &bsum, 2},
-  {"approx_gradients", (DL_FUNC) &approx_gradients, 6},
+  {"approx_gradient", (DL_FUNC) &approx_gradient, 5},
   // Math
   {"sigmoid", (DL_FUNC) &sigmoid, 1},
   {NULL, NULL, 0}

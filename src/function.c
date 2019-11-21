@@ -35,12 +35,14 @@ limitations under the License.
 
 SEXP cg_function_def(SEXP function)
 {
-  SEXP def = Rf_findVarInFrame(function, CG_DEF_SYMBOL);
+  SEXP def = PROTECT(Rf_findVarInFrame(function, CG_DEF_SYMBOL));
 
   if(!Rf_isFunction(def))
   {
     Rf_errorcall(R_NilValue, "function has no definition");
   }
+
+  UNPROTECT(1);
 
   return def;
 }
@@ -57,12 +59,14 @@ void cg_function_set_def(SEXP function, SEXP def)
 
 SEXP cg_function_grads(SEXP function)
 {
-  SEXP grads = Rf_findVarInFrame(function, CG_GRADS_SYMBOL);
+  SEXP grads = PROTECT(Rf_findVarInFrame(function, CG_GRADS_SYMBOL));
 
   if(TYPEOF(grads) != VECSXP)
   {
     Rf_errorcall(R_NilValue, "function has no gradients");
   }
+
+  UNPROTECT(1);
 
   return grads;
 }
@@ -74,7 +78,7 @@ void cg_function_set_grads(SEXP function, SEXP grads)
     Rf_errorcall(R_NilValue, "argument 'grads' must be a list of gradient functions");
   }
 
-  R_len_t n = Rf_xlength(grads);
+  R_len_t n = XLENGTH(grads);
 
   for(int i = 0; i < n; i++)
   {

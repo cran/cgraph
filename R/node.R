@@ -10,7 +10,7 @@
 #' @return cg_node object.
 #'
 #' @examples # Initialize a computational graph
-#' x <- cg_graph()
+#' graph <- cg_graph()
 #'
 #' # Add a constant with value 1 and name 'a' to the graph.
 #' a <- cg_constant(1, name = "a")
@@ -29,12 +29,12 @@ cg_constant <- function(value, name = NULL)
 #' @param value numeric vector or array, value of the node.
 #' @param name character scalar, name of the node (optional). In case argument \code{name} is missing, the node is added to the graph under an automatically generated name.
 #'
-#' @note Parameters are assumed to be subject to some optimization process. Hence, their value might change over time.
+#' @note Parameters are assumed to be subject to some optimization process. Hence, their value might change over time. You can use data member \code{value} of a cg_node object to retrieve or change its value.
 #'
 #' @return cg_node object.
 #'
 #' @examples # Initialize a computational graph
-#' x <- cg_graph()
+#' graph <- cg_graph()
 #'
 #' # Add a parameter with value 1 and name 'a' to the graph.
 #' a <- cg_parameter(1, name = "a")
@@ -52,15 +52,18 @@ cg_parameter <- function(value, name = NULL)
 #'
 #' @param name character scalar, name of the node (optional). In case argument \code{name} is missing, the node is added to the graph under an automatically generated name.
 #'
-#' @note Inputs cannot be assigned a fixed value but behave as placeholders. Values can be assigned to inputs when evaluating or differentiating a graph (see \link[cgraph]{cg_graph_run} and \link[cgraph]{cg_graph_gradients} for more details).
+#' @note Inputs cannot be assigned a value upon creation. Instead, they behave as placeholders. You can use data member \code{value} of a cg_node object to retrieve or change its value.
 #'
 #' @return cg_node object.
 #'
 #' @examples # Initialize a computational graph
-#' x <- cg_graph()
+#' graph <- cg_graph()
 #'
-#' # Add a parameter with name 'a' to the graph.
+#' # Add an input with name 'a' to the graph.
 #' a <- cg_input(name = "a")
+#'
+#' # Set the value to 2
+#' a$value <- 2
 #'
 #' @author Ron Triepels
 #' @export
@@ -77,12 +80,14 @@ cg_input <- function(name = NULL)
 #' @param inputs list, the nodes that are consumed by the operation.
 #' @param name character scalar, name of the node (optional). In case argument \code{name} is missing, the node is added to the graph under an automatically generated name.
 #'
-#' @note Any objects that are supplied to argument \code{inputs} that are not cg_node objects are implicitly converted to cg_constant objects.
+#' @note Argument \code{name} is deprecated and will be removed in the next major release.
+#'
+#' Any objects that are supplied to argument \code{inputs} that are not cg_node objects are implicitly coerced to cg_constant objects.
 #'
 #' @return cg_node object.
 #'
 #' @examples # Initialize a computational graph
-#' x <- cg_graph()
+#' graph <- cg_graph()
 #'
 #' # Create a custom negation function
 #' f <- cg_function(

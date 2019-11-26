@@ -1,6 +1,6 @@
-dd0a54f70253f482e620af3fad786ba1 *DESCRIPTION
+cb806da0f0d995728868bbf0e4142ccf *DESCRIPTION
 cd9022a329464ed2a8362e9340627af2 *NAMESPACE
-5ed682e74c0560494d124286b9403210 *NEWS.md
+2f8abc8b8ed52934254cfa3584455536 *NEWS.md
 d412ba624ece872a6dd11b4016af3905 *R/array.R
 9ce43a09c5fd4d3b3112ee85767dc5f2 *R/function.R
 46c95f2ae3171a10d6a74df6695f96c8 *R/graph.R
@@ -70,7 +70,7 @@ fad4cfedb4c614939b7f347984e810e3 *man/cg_tcrossprod.Rd
 5fe0da8b27d0af3010033714d92e6755 *src/class.h
 9359872096e05707102ba9620257f0bc *src/function.c
 be355619de6b0fa3d55eec7c652c9d15 *src/function.h
-c9c45ae69db5b6f761aeb484d2d869e2 *src/graph.c
+43278559d6babf0c4100772a82adeb6b *src/graph.c
 c643fe56e75ccb69d94bb29e1004edf1 *src/graph.h
 b51772d573f32d46d60efb667563b1d9 *src/init.c
 da803fee75289621e22658aee4102c52 *src/internal.c
@@ -85,5 +85,5 @@ fe67a47cdb95dbacf69f53bf9dfe65d4 *src/session.h
 9c8fd901882c9e506d1266f2c090494b *src/stack.h
 d127392c90991a167d41edfc1c74d56f *tests/testthat.R
 ea26c536fafe58a86e854b62c7fc8574 *tests/testthat/test_array.R
-5ed5374968e0c88e4133d622130b8fd4 *tests/testthat/test_graph.R
+51a6f699f30002628e8af548cff11a5f *tests/testthat/test_graph.R
 8469d1a6eb01576b1defcea3d4d3ad3e *tests/testthat/test_math.R

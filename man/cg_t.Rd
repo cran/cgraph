@@ -7,15 +7,15 @@
 cg_t(x, name = NULL)
 }
 \arguments{
-\item{x}{either a cg_node object or a numeric matrix.}
+\item{x}{either a cg_node object or a numerical matrix.}
 
 \item{name}{character scalar, name of the operation (optional).}
 }
 \value{
-cg_operator object, node of the operation.
+cg_operator object.
 }
 \description{
-Perform \code{t(x)}.
+Calculate \code{t(x)}.
 }
 \seealso{
 \link[base:t]{t}

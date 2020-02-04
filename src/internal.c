@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Ron Triepels
+Copyright 2020 Ron Triepels
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,6 +28,70 @@ limitations under the License.
  * PUBLIC METHODS
  */
 
+SEXP dots(SEXP env)
+{
+  if(!Rf_isEnvironment(env))
+  {
+    Rf_errorcall(R_NilValue, "argument 'env' must be an environment");
+  }
+
+  SEXP args = PROTECT(Rf_findVarInFrame(env, R_DotsSymbol));
+
+  if(TYPEOF(args) != DOTSXP)
+  {
+    UNPROTECT(1);
+
+    return Rf_allocVector(VECSXP, 0);
+  }
+
+  R_len_t n = 0;
+
+  for(SEXP arg = args; arg != R_NilValue; arg = CDR(arg))
+  {
+    SEXP arg_value = CAR(arg);
+
+    if(TYPEOF(arg_value) == PROMSXP)
+    {
+      SETCAR(arg, Rf_eval(arg_value, env));
+    }
+
+    n++;
+  }
+
+  if(n == 1 && CAR(args) == R_MissingArg)
+  {
+    UNPROTECT(1);
+
+    return Rf_allocVector(VECSXP, 0);
+  }
+
+  SEXP dots = PROTECT(Rf_allocVector(VECSXP, n));
+
+  SEXP names = PROTECT(Rf_allocVector(STRSXP, n));
+
+  SEXP arg = args;
+
+  for(int i = 0; i < n; i++)
+  {
+    SET_VECTOR_ELT(dots, i, CAR(arg));
+
+    SEXP arg_tag = (TAG)(arg);
+
+    if(arg_tag != R_NilValue)
+    {
+      SET_STRING_ELT(names, i, (PRINTNAME)(arg_tag));
+    }
+
+    arg = CDR(arg);
+  }
+
+  Rf_setAttrib(dots, R_NamesSymbol, names);
+
+  UNPROTECT(3);
+
+  return dots;
+}
+
 SEXP bsum(SEXP x, SEXP block_size)
 {
   if(!Rf_isNumeric(x))
@@ -47,11 +111,11 @@ SEXP bsum(SEXP x, SEXP block_size)
     Rf_errorcall(R_NilValue, "invalid block size");
   }
 
-  SEXP y = PROTECT(Rf_allocVector(REALSXP, m));
+  SEXP out = PROTECT(Rf_allocVector(REALSXP, m));
 
-  double *b = REAL(y);
+  double *po = REAL(out);
 
-  memset(b, 0, m * sizeof(double));
+  memset(po, 0, m * sizeof(double));
 
   R_len_t n = XLENGTH(x);
 
@@ -59,12 +123,12 @@ SEXP bsum(SEXP x, SEXP block_size)
   {
     case REALSXP :
     {
-      double *a = REAL(x);
+      double *px = REAL(x);
 
       for(int i = 0, j = 0; i < n; i++,
           j = (++j == m) ? 0 : j)
       {
-        b[j] += a[i];
+        po[j] += px[i];
       }
 
       break;
@@ -72,12 +136,12 @@ SEXP bsum(SEXP x, SEXP block_size)
     case LGLSXP :
     case INTSXP :
     {
-      int *a = INTEGER(x);
+      int *px = INTEGER(x);
 
       for(int i = 0, j = 0; i < n; i++,
           j = (++j == m) ? 0 : j)
       {
-        b[j] += a[i];
+        po[j] += px[i];
       }
 
       break;
@@ -86,7 +150,7 @@ SEXP bsum(SEXP x, SEXP block_size)
 
   UNPROTECT(1);
 
-  return y;
+  return out;
 }
 
 SEXP approx_gradient(SEXP graph, SEXP target, SEXP node, SEXP index, SEXP epsilon)
@@ -117,11 +181,10 @@ SEXP approx_gradient(SEXP graph, SEXP target, SEXP node, SEXP index, SEXP epsilo
 
   PROTECT_WITH_INDEX(target_value = cg_node_value(target), &target_index);
 
-  if(!Rf_isReal(target_value))
+  if(!Rf_isNumeric(target_value))
   {
-    REPROTECT(target_value = Rf_coerceVector(target_value, REALSXP), target_index);
-
-    cg_node_set_value(target, target_value);
+    Rf_errorcall(R_NilValue, "unable to differentiate object of type '%s' for node '%s'",
+                 Rf_type2char(TYPEOF(target_value)), cg_node_name(target));
   }
 
   int k = Rf_asInteger(index);
@@ -138,6 +201,12 @@ SEXP approx_gradient(SEXP graph, SEXP target, SEXP node, SEXP index, SEXP epsilo
 
   PROTECT_WITH_INDEX(node_value = cg_node_value(node), &node_index);
 
+  if(!Rf_isNumeric(node_value))
+  {
+    Rf_errorcall(R_NilValue, "unable to differentiate with respect to an object of type '%s' for node '%s'",
+                 Rf_type2char(TYPEOF(node_value)), cg_node_name(target));
+  }
+
   if(!Rf_isReal(node_value))
   {
     REPROTECT(node_value = Rf_coerceVector(node_value, REALSXP), node_index);
@@ -149,14 +218,14 @@ SEXP approx_gradient(SEXP graph, SEXP target, SEXP node, SEXP index, SEXP epsilo
 
   SEXP grad = PROTECT(Rf_allocVector(REALSXP, n));
 
-  double *x = REAL(node_value);
-  double *y = REAL(grad);
+  double *pn = REAL(node_value);
+  double *pg = REAL(grad);
 
   double eps = Rf_asReal(epsilon);
 
   for(int i = 0; i < n; i++)
   {
-    x[i] += eps;
+    pn[i] += eps;
 
     cg_graph_forward(graph, target);
 
@@ -164,7 +233,7 @@ SEXP approx_gradient(SEXP graph, SEXP target, SEXP node, SEXP index, SEXP epsilo
 
     double t1 = REAL(target_value)[k - 1];
 
-    x[i] -= 2 * eps;
+    pn[i] -= 2 * eps;
 
     cg_graph_forward(graph, target);
 
@@ -172,9 +241,9 @@ SEXP approx_gradient(SEXP graph, SEXP target, SEXP node, SEXP index, SEXP epsilo
 
     double t2 = REAL(target_value)[k - 1];
 
-    x[i] += eps;
+    pg[i] = (t1 - t2) / (2 * eps);
 
-    y[i] = (t1 - t2) / (2 * eps);
+    pn[i] += eps;
   }
 
   SHALLOW_DUPLICATE_ATTRIB(grad, node_value);

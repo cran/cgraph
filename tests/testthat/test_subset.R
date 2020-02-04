@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-context("Array")
+context("Subset")
 
-test_that("Array 1",
+test_that("Subset 1",
 {
   # Initialize graph
   graph <- cg_graph()
 
   # Create parameters
-  a <- cg_parameter(matrix(1:4, 2, 2), name = "a")
-  b <- cg_parameter(matrix(2:5, 2, 2), name = "b")
+  a <- cg_parameter(1:24, name = "a")
+  b <- cg_parameter(1:24, name = "b")
 
   # Create test expression
-  c <- cg_prod(cg_matmul(a, b)) * cg_sum(cg_matmul(a, b))
+  c <- a[2] + b[4]
 
   # Perform backward pass
   cg_graph_backward(graph, c)
@@ -34,17 +34,17 @@ test_that("Array 1",
   expect_equivalent(b$grad, approx_gradient(graph, c, b), tolerance = 1e-4)
 })
 
-test_that("Array 2",
+test_that("Subset 2",
 {
   # Initialize graph
   graph <- cg_graph()
 
   # Create parameters
-  a <- cg_parameter(matrix(1:4, 2, 2), name = "a")
-  b <- cg_parameter(matrix(2:5, 2, 2), name = "b")
+  a <- cg_parameter(array(1:24, c(2,3,4)), name = "a")
+  b <- cg_parameter(array(1:24, c(4,3,2)), name = "b")
 
   # Create test expression
-  c <- cg_mean(cg_crossprod(a, b) + cg_tcrossprod(a, b) + cg_crossprod(a) + cg_tcrossprod(b))
+  c <- cg_sum(cg_matmul(a[1,,], b[,,1]))
 
   # Perform backward pass
   cg_graph_backward(graph, c)
@@ -54,37 +54,17 @@ test_that("Array 2",
   expect_equivalent(b$grad, approx_gradient(graph, c, b), tolerance = 1e-4)
 })
 
-test_that("Array 3",
+test_that("Subset 3",
 {
   # Initialize graph
   graph <- cg_graph()
 
   # Create parameters
-  a <- cg_parameter(matrix(1:4, 2, 2), name = "a")
-  b <- cg_parameter(matrix(2:5, 2, 2), name = "b")
+  a <- cg_parameter(array(1:24, c(2,3,4)), name = "a")
+  b <- cg_parameter(array(1:24, c(4,3,2)), name = "b")
 
   # Create test expression
-  c <- cg_rowsums(cg_linear(a, b, cg_colsums(b)))
-
-  # Perform backward pass
-  cg_graph_backward(graph, c, index = 1)
-
-  # Check gradients
-  expect_equivalent(a$grad, approx_gradient(graph, c, a), tolerance = 1e-4)
-  expect_equivalent(b$grad, approx_gradient(graph, c, b), tolerance = 1e-4)
-})
-
-test_that("Array 4",
-{
-  # Initialize graph
-  graph <- cg_graph()
-
-  # Create parameters
-  a <- cg_parameter(matrix(1:4, 2, 2), name = "a")
-  b <- cg_parameter(matrix(2:5, 2, 2), name = "b")
-
-  # Create test expression
-  c <- cg_max(a) * cg_min(b)
+  c <- a[2,1,3, drop = TRUE] + b[3,1,1, drop = TRUE]
 
   # Perform backward pass
   cg_graph_backward(graph, c)
@@ -94,37 +74,37 @@ test_that("Array 4",
   expect_equivalent(b$grad, approx_gradient(graph, c, b), tolerance = 1e-4)
 })
 
-test_that("Array 5",
+test_that("Subset 4",
 {
   # Initialize graph
   graph <- cg_graph()
 
   # Create parameters
-  a <- cg_parameter(matrix(1:4, 2, 2), name = "a")
-  b <- cg_parameter(matrix(2:5, 2, 2), name = "b")
+  a <- cg_parameter(1:24, name = "a")
+  b <- cg_parameter(1:24, name = "b")
 
   # Create test expression
-  c <- cg_pmax(a, b) * cg_pmin(a, b)
+  c <- a[[2]] + b[[4]]
 
   # Perform backward pass
-  cg_graph_backward(graph, c, index = 1)
+  cg_graph_backward(graph, c)
 
   # Check gradients
   expect_equivalent(a$grad, approx_gradient(graph, c, a), tolerance = 1e-4)
   expect_equivalent(b$grad, approx_gradient(graph, c, b), tolerance = 1e-4)
 })
 
-test_that("Array 6",
+test_that("Subset 5",
 {
   # Initialize graph
   graph <- cg_graph()
 
   # Create parameters
-  a <- cg_parameter(matrix(1:4, 2, 2), name = "a")
-  b <- cg_parameter(matrix(2:5, 2, 2), name = "b")
+  a <- cg_parameter(array(1:24, c(2,3,4)), name = "a")
+  b <- cg_parameter(array(1:24, c(4,3,2)), name = "b")
 
   # Create test expression
-  c <- cg_sum(a + cg_as_numeric(cg_t(b)))
+  c <- a[[2,1,3]] + b[[3,1,1]]
 
   # Perform backward pass
   cg_graph_backward(graph, c)

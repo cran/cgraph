@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Ron Triepels
+Copyright 2020 Ron Triepels
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef MATH_H
-#define MATH_H
+#ifndef VECTOR_H
+#define VECTOR_H
 
 #define R_NO_REMAP
 

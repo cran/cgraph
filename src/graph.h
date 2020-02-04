@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Ron Triepels
+Copyright 2020 Ron Triepels
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,27 +28,25 @@ limitations under the License.
 
 SEXP cg_graph_nodes(SEXP graph);
 
-char* cg_graph_gen_name(SEXP graph);
+int cg_graph_eager(SEXP graph);
 
-int cg_graph_node_exists(SEXP graph, const char *name);
+void cg_graph_set_eager(SEXP graph, const int eager);
+
+char* cg_graph_gen_name(SEXP graph);
 
 void cg_graph_add_node(SEXP graph, SEXP node);
 
 SEXP cg_graph_get_node(SEXP graph, const int id);
 
-SEXP cg_graph_reverse_dfs(SEXP graph, SEXP target); /* NOTE: DEPRECATED */
-
 /*
  * PUBLIC METHODS
  */
 
+SEXP cg_graph_get(SEXP graph, SEXP name);
+
 SEXP cg_graph_forward(SEXP graph, SEXP target);
 
 SEXP cg_graph_backward(SEXP graph, SEXP target, SEXP index);
-
-SEXP cg_graph_run(SEXP graph, SEXP target, SEXP values); /* NOTE: DEPRECATED */
-
-SEXP cg_graph_gradients(SEXP graph, SEXP target, SEXP values, SEXP gradients, SEXP index); /* NOTE: DEPRECATED */
 
 /*
  * PUBLIC CONSTRUCTORS

@@ -4,17 +4,17 @@
 \alias{cg_crossprod}
 \title{Matrix Crossproduct}
 \usage{
-cg_crossprod(x, y = NULL, name = NULL)
+cg_crossprod(x, y = x, name = NULL)
 }
 \arguments{
-\item{x}{either a cg_node object or a numeric matrix.}
+\item{x}{either a cg_node object or a numerical matrix.}
 
-\item{y}{either a cg_node object or a numeric matrix (optional).}
+\item{y}{either a cg_node object or a numerical matrix (optional).}
 
 \item{name}{character scalar, name of the operation (optional).}
 }
 \value{
-cg_operator object, node of the operation.
+cg_operator object.
 }
 \description{
 Calculate \code{crossprod(x, y)}.

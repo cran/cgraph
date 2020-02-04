@@ -1,4 +1,4 @@
-# Copyright 2019 Ron Triepels
+# Copyright 2020 Ron Triepels
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,15 +12,84 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#' Dimensions of an Array
+#'
+#' Calculate \code{dim(x)}.
+#'
+#' @param x either a cg_node object or a numerical array.
+#' @param name character scalar, name of the operation (optional).
+#'
+#' @return cg_operator object.
+#'
+#' @note This operator is not differentiable. Any attempt to differentiate this operator will result in an error.
+#'
+#' @seealso \link[base]{dim}
+#'
+#' @author Ron Triepels
+#' @export
+cg_dim <- function(x, name = NULL)
+{
+  cg_operator(dim, list(x), name)
+}
+
+# Function definition
+delayedAssign("dim", cg_function(def = base::dim))
+
+#' Number of Rows of an Array
+#'
+#' Calculate \code{nrow(x)}.
+#'
+#' @param x either a cg_node object or a numerical array.
+#' @param name character scalar, name of the operation (optional).
+#'
+#' @return cg_operator object.
+#'
+#' @note This operator is not differentiable. Any attempt to differentiate this operator will result in an error.
+#'
+#' @seealso \link[base]{nrow}
+#'
+#' @author Ron Triepels
+#' @export
+cg_nrow <- function(x, name = NULL)
+{
+  cg_operator(nrow, list(x), name)
+}
+
+# Function definition
+delayedAssign("nrow", cg_function(def = base::nrow))
+
+#' Number of Columns of an Array
+#'
+#' Calculate \code{ncol(x)}.
+#'
+#' @param x either a cg_node object or a numerical array.
+#' @param name character scalar, name of the operation (optional).
+#'
+#' @return cg_operator object.
+#'
+#' @note This operator is not differentiable. Any attempt to differentiate this operator will result in an error.
+#'
+#' @seealso \link[base]{ncol}
+#'
+#' @author Ron Triepels
+#' @export
+cg_ncol <- function(x, name = NULL)
+{
+  cg_operator(ncol, list(x), name)
+}
+
+# Function definition
+delayedAssign("ncol", cg_function(def = base::ncol))
+
 #' Matrix Multiplication
 #'
 #' Calculate \code{x \%*\% y}.
 #'
-#' @param x either a cg_node object or a numeric matrix.
-#' @param y either a cg_node object or a numeric matrix.
+#' @param x either a cg_node object or a numerical matrix.
+#' @param y either a cg_node object or a numerical matrix.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:matmult]{matmult}
 #'
@@ -35,11 +104,11 @@ cg_matmul <- function(x, y, name = NULL)
 delayedAssign("matmul", cg_function(
   def = base::`%*%`,
   grads = list(
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       tcrossprod(grad, y)
     },
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       crossprod(x, grad)
     }
@@ -50,37 +119,30 @@ delayedAssign("matmul", cg_function(
 #'
 #' Calculate \code{crossprod(x, y)}.
 #'
-#' @param x either a cg_node object or a numeric matrix.
-#' @param y either a cg_node object or a numeric matrix (optional).
+#' @param x either a cg_node object or a numerical matrix.
+#' @param y either a cg_node object or a numerical matrix (optional).
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:crossprod]{crossprod}
 #'
 #' @author Ron Triepels
 #' @export
-cg_crossprod <- function(x, y = NULL, name = NULL)
+cg_crossprod <- function(x, y = x, name = NULL)
 {
-  if(is.null(y))
-  {
-    cg_operator(crossprod, list(x, x), name)
-  }
-  else
-  {
-    cg_operator(crossprod, list(x, y), name)
-  }
+  cg_operator(crossprod, list(x, y), name)
 }
 
 # Function definition
 delayedAssign("crossprod", cg_function(
   def = base::crossprod,
   grads = list(
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       y %*% grad
     },
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       x %*% grad
     }
@@ -91,37 +153,30 @@ delayedAssign("crossprod", cg_function(
 #'
 #' Calculate \code{tcrossprod(x, y)}.
 #'
-#' @param x either a cg_node object or a numeric matrix.
-#' @param y either a cg_node object or a numeric matrix (optional).
+#' @param x either a cg_node object or a numerical matrix.
+#' @param y either a cg_node object or a numerical matrix (optional).
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:crossprod]{tcrossprod}
 #'
 #' @author Ron Triepels
 #' @export
-cg_tcrossprod <- function(x, y = NULL, name = NULL)
+cg_tcrossprod <- function(x, y = x, name = NULL)
 {
-  if(is.null(y))
-  {
-    cg_operator(tcrossprod, list(x, x), name)
-  }
-  else
-  {
-    cg_operator(tcrossprod, list(x, y), name)
-  }
+  cg_operator(tcrossprod, list(x, y), name)
 }
 
 # Function definition
 delayedAssign("tcrossprod", cg_function(
   def = base::tcrossprod,
   grads = list(
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       grad %*% y
     },
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       grad %*% x
     }
@@ -132,12 +187,12 @@ delayedAssign("tcrossprod", cg_function(
 #'
 #' Calculate \code{x \%*\% y + c(z)}.
 #'
-#' @param x either a cg_node object or a numeric matrix.
-#' @param y either a cg_node object or a numeric matrix.
-#' @param z either a cg_node object or a numeric vector.
+#' @param x either a cg_node object or a numerical matrix.
+#' @param y either a cg_node object or a numerical matrix.
+#' @param z either a cg_node object or a numerical vector.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @note This function is equivalent to \code{cg_matmul(x, y) + cg_as_numeric(z)}.
 #'
@@ -155,15 +210,15 @@ delayedAssign("linear", cg_function(
     x %*% y + c(z)
   },
   grads = list(
-    function(x, y, z, val, grad)
+    function(x, y, z, value, grad)
     {
       tcrossprod(grad, y)
     },
-    function(x, y, z, val, grad)
+    function(x, y, z, value, grad)
     {
       crossprod(x, grad)
     },
-    function(x, y, z, val, grad)
+    function(x, y, z, value, grad)
     {
       if(is.array(z))
       {
@@ -181,12 +236,12 @@ delayedAssign("linear", cg_function(
 #'
 #' Calculate \code{sum(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
 #' @note In contrast to the base \link[base:sum]{sum} function, this function only accepts a single argument.
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @note Function \link[base:sum]{sum} is called without changing the default value of argument \code{na.rm}.
 #'
@@ -203,7 +258,7 @@ cg_sum <- function(x, name = NULL)
 delayedAssign("sum", cg_function(
   def = base::sum,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       if(is.array(x))
       {
@@ -221,12 +276,12 @@ delayedAssign("sum", cg_function(
 #'
 #' Calculate \code{prod(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
 #' @note In contrast to the base \link[base:prod]{prod} function, this function only accepts a single argument.
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @note Function \link[base:prod]{prod} is called without changing the default value of argument \code{na.rm}.
 #'
@@ -243,9 +298,9 @@ cg_prod <- function(x, name = NULL)
 delayedAssign("prod", cg_function(
   def = base::prod,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
-      grad * val / x
+      grad * value / x
     }
   )
 ))
@@ -254,10 +309,10 @@ delayedAssign("prod", cg_function(
 #'
 #' Calculate \code{rowSums(x)}.
 #'
-#' @param x either a cg_node object or a numeric matrix or array.
+#' @param x either a cg_node object or a numerical matrix or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @note Function \link[base:colSums]{rowSums} is called without changing the default value of argument \code{na.rm} and \code{dims}.
 #'
@@ -274,21 +329,21 @@ cg_rowsums <- function(x, name = NULL)
 delayedAssign("rowsums", cg_function(
   def = base::rowSums,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       array(grad, dim(x))
     }
   )
 ))
 
-#' Col Sums
+#' Column Sums
 #'
 #' Calculate \code{colSums(x)}.
 #'
-#' @param x either a cg_node object or a numeric matrix or array.
+#' @param x either a cg_node object or a numerical matrix or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @note Function \link[base:colSums]{colSums} is called without changing the default value of argument \code{na.rm} and \code{dims}.
 #'
@@ -305,7 +360,7 @@ cg_colsums <- function(x, name = NULL)
 delayedAssign("colsums", cg_function(
   def = base::colSums,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       aperm(array(grad, rev(dim(x))))
     }
@@ -316,10 +371,10 @@ delayedAssign("colsums", cg_function(
 #'
 #' Calculate \code{mean(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @note Function \link[base:mean]{mean} is called without changing the default value of argument \code{trim} and \code{na.rm}.
 #'
@@ -336,7 +391,7 @@ cg_mean <- function(x, name = NULL)
 delayedAssign("mean", cg_function(
   def = base::mean.default,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       if(is.array(x))
       {
@@ -354,10 +409,10 @@ delayedAssign("mean", cg_function(
 #'
 #' Calculate \code{max(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @note Function \link[base:Extremes]{max} is called without changing the default value of argument \code{na.rm}.
 #'
@@ -374,9 +429,9 @@ cg_max <- function(x, name = NULL)
 delayedAssign("max", cg_function(
   def = base::max,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
-      c(grad) * (x == c(val))
+      c(grad) * (x == c(value))
     }
   )
 ))
@@ -385,10 +440,10 @@ delayedAssign("max", cg_function(
 #'
 #' Calculate \code{min(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @note Function \link[base:Extremes]{min} is called without changing the default value of argument \code{na.rm}.
 #'
@@ -405,9 +460,9 @@ cg_min <- function(x, name = NULL)
 delayedAssign("min", cg_function(
   def = base::min,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
-      c(grad) * (x == c(val))
+      c(grad) * (x == c(value))
     }
   )
 ))
@@ -416,11 +471,11 @@ delayedAssign("min", cg_function(
 #'
 #' Calculate \code{pmax(x, y)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
-#' @param y either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
+#' @param y either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @note Function \link[base:Extremes]{pmax} is called without changing the default value of argument \code{na.rm}.
 #'
@@ -437,7 +492,7 @@ cg_pmax <- function(x, y, name = NULL)
 delayedAssign("pmax", cg_function(
   def = base::pmax,
   grads = list(
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(x))
       {
@@ -448,7 +503,7 @@ delayedAssign("pmax", cg_function(
         bsum(grad * (x >= c(y)), length(x))
       }
     },
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(y))
       {
@@ -466,11 +521,11 @@ delayedAssign("pmax", cg_function(
 #'
 #' Calculate \code{pmin(x, y)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
-#' @param y either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
+#' @param y either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @note Function \link[base:Extremes]{pmin} is called without changing the default value of argument \code{na.rm}.
 #'
@@ -487,7 +542,7 @@ cg_pmin <- function(x, y, name = NULL)
 delayedAssign("pmin", cg_function(
   def = base::pmin,
   grads = list(
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(x))
       {
@@ -498,7 +553,7 @@ delayedAssign("pmin", cg_function(
         bsum(grad * (x <= c(y)), length(x))
       }
     },
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(y))
       {
@@ -512,72 +567,14 @@ delayedAssign("pmin", cg_function(
   )
 ))
 
-#' Coerce to a Numeric Vector
-#'
-#' Coerce \code{x} to a one-dimensional numeric vector.
-#'
-#' @param x either a cg_node object or a numeric matrix or array.
-#' @param name character scalar, name of the operation (optional).
-#'
-#' @return cg_operator object, node of the operation.
-#'
-#' @note This function is identical to \code{cg_as_numeric}.
-#'
-#' @seealso \link[base:double]{as.double}
-#'
-#' @author Ron Triepels
-#' @export
-cg_as_double <- function(x, name = NULL)
-{
-  cg_operator(as_double, list(x), name)
-}
-
-# Function definition
-delayedAssign("as_double", cg_function(
-  def = base::as.double,
-  grads = list(
-    function(x, val, grad)
-    {
-      if(is.array(x))
-      {
-        array(grad, dim(x))
-      }
-      else
-      {
-        as.double(grad)
-      }
-    }
-  )
-))
-
-#' Coerce to a Numeric Vector
-#'
-#' Coerce \code{x} to a one-dimensional numeric vector.
-#'
-#' @param x either a cg_node object or a numeric matrix or array.
-#' @param name character scalar, name of the operation (optional).
-#'
-#' @return cg_operator object, node of the operation.
-#'
-#' @note This function is identical to \code{cg_as_double}.
-#'
-#' @seealso \link[base:double]{as.numeric}
-#'
-#' @author Ron Triepels
-#' @export
-cg_as_numeric <- function(x, name = NULL)
-{
-  cg_operator(as_double, list(x), name)
-}
-
 #' Matrix Transpose
 #'
-#' Perform \code{t(x)}.
+#' Calculate \code{t(x)}.
 #'
-#' @param x either a cg_node object or a numeric matrix.
+#' @param x either a cg_node object or a numerical matrix.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:t]{t}
 #'
@@ -592,7 +589,7 @@ cg_t <- function(x, name = NULL)
 delayedAssign("t", cg_function(
   def = base::t.default,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       t.default(grad)
     }

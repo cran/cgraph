@@ -1,18 +1,35 @@
+# Copyright 2020 Ron Triepels
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 context("Graph")
 
-test_that("Duplicate nodes",
+test_that("Graph 1",
 {
   # Initialize graph
   graph <- cg_graph()
 
   # Create parameter
-  a <- cg_parameter(1, name = "a")
+  a <- cg_parameter(2, name = "a")
 
-  # Create duplicate parameter
-  expect_error(cg_parameter(1, name = "a"))
+  # Retrieve node a
+  b <- cg_graph_get(graph, "a")
+
+  # Check equality
+  expect_equivalent(a, b)
 })
 
-test_that("Operators with equivalent inputs",
+test_that("Graph 2",
 {
   # Initialize graph
   graph <- cg_graph()
@@ -23,9 +40,6 @@ test_that("Operators with equivalent inputs",
   # Create test expression
   b <- (a + a) + (a - a) + (a * a) + (a / a)
 
-  # Perform forward pass
-  cg_graph_forward(graph, b)
-
   # Perform backward pass
   cg_graph_backward(graph, b)
 
@@ -33,7 +47,7 @@ test_that("Operators with equivalent inputs",
   expect_equivalent(a$grad, approx_gradient(graph, b, a), tolerance = 1e-4)
 })
 
-test_that("Graph with multiple outputs",
+test_that("Graph 3",
 {
   # Initialize graph
   graph <- cg_graph()
@@ -46,18 +60,12 @@ test_that("Graph with multiple outputs",
   c <- a * b
   d <- a / b
 
-  # Perform forward pass
-  cg_graph_forward(graph, c)
-
   # Perform backward pass
   cg_graph_backward(graph, c)
 
   # Check gradients
   expect_equivalent(a$grad, approx_gradient(graph, c, a), tolerance = 1e-4)
   expect_equivalent(b$grad, approx_gradient(graph, c, b), tolerance = 1e-4)
-
-  # Perform forward pass
-  cg_graph_forward(graph, d)
 
   # Perform backward pass
   cg_graph_backward(graph, d)
@@ -67,7 +75,7 @@ test_that("Graph with multiple outputs",
   expect_equivalent(b$grad, approx_gradient(graph, d, b), tolerance = 1e-4)
 })
 
-test_that("Reverse DFS algorithm check",
+test_that("Graph 4",
 {
   # Initialize graph
   graph <- cg_graph()
@@ -77,11 +85,8 @@ test_that("Reverse DFS algorithm check",
   b <- cg_parameter(2, "b")
 
   # Create test expressions
-  c <- cg_sin(b, "c")
-  d <- cg_add(cg_sin(a) + c, cg_sin(c), "d")
-
-  # Perform forward pass
-  cg_graph_forward(graph, d)
+  c <- cg_sin(b)
+  d <- cg_add(cg_sin(a) + c, cg_sin(c))
 
   # Perform backward pass
   cg_graph_backward(graph, d)
@@ -91,7 +96,7 @@ test_that("Reverse DFS algorithm check",
   expect_equivalent(b$grad, approx_gradient(graph, d, b), tolerance = 1e-4)
 })
 
-test_that("Large graph (10000 operators)",
+test_that("Graph 5",
 {
   # Initialize graph
   graph <- cg_graph()
@@ -107,9 +112,6 @@ test_that("Large graph (10000 operators)",
   {
     b <- cg_abs(b)
   }
-
-  # Perform forward pass
-  cg_graph_forward(graph, b)
 
   # Perform backward pass
   cg_graph_backward(graph, b)

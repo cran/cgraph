@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Ron Triepels
+Copyright 2020 Ron Triepels
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ limitations under the License.
 /*
  * PUBLIC METHODS
  */
+
+SEXP dots(SEXP env);
 
 SEXP bsum(SEXP x, SEXP block_size);
 

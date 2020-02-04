@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Ron Triepels
+Copyright 2020 Ron Triepels
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,31 @@ limitations under the License.
 
 #include <R.h>
 #include <Rinternals.h>
+
+/*
+ * MACROS
+ */
+
+#define CG_GET(x, SYMBOL) Rf_findVarInFrame(x, SYMBOL)
+#define CG_SET(x, SYMBOL, v) Rf_defineVar(SYMBOL, v, x)
+
+/*
+ * SYMBOLS
+ */
+
+SEXP CG_ID_SYMBOL;
+SEXP CG_DEF_SYMBOL;
+SEXP CG_FUN_SYMBOL;
+SEXP CG_GRAD_SYMBOL;
+SEXP CG_NAME_SYMBOL;
+SEXP CG_TYPE_SYMBOL;
+SEXP CG_EAGER_SYMBOL;
+SEXP CG_GRADS_SYMBOL;
+SEXP CG_GRAPH_SYMBOL;
+SEXP CG_NODES_SYMBOL;
+SEXP CG_VALUE_SYMBOL;
+SEXP CG_INPUTS_SYMBOL;
+SEXP CG_SESSION_SYMBOL;
 
 /*
  * PRIVATE METHODS

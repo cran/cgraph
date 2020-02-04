@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Ron Triepels
+Copyright 2020 Ron Triepels
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,24 +32,12 @@ int cg_is(SEXP env, const char *class_name)
     return FALSE;
   }
 
-  SEXP class_attrib = Rf_getAttrib(env, R_ClassSymbol);
-
-  if(Rf_isNull(class_attrib))
+  if(!Rf_inherits(env, class_name))
   {
     return FALSE;
   }
 
-  int n = XLENGTH(class_attrib);
-
-  for(int i = 0; i < n; i++)
-  {
-    if(strcmp(CHAR(STRING_ELT(class_attrib, i)), class_name) == 0)
-    {
-      return TRUE;
-    }
-  }
-
-  return FALSE;
+  return TRUE;
 }
 
 /*

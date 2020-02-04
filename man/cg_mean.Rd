@@ -7,12 +7,12 @@
 cg_mean(x, name = NULL)
 }
 \arguments{
-\item{x}{either a cg_node object or a numeric vector or array.}
+\item{x}{either a cg_node object or a numerical vector or array.}
 
 \item{name}{character scalar, name of the operation (optional).}
 }
 \value{
-cg_operator object, node of the operation.
+cg_operator object.
 }
 \description{
 Calculate \code{mean(x)}.

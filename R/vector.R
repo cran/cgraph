@@ -1,4 +1,4 @@
-# Copyright 2019 Ron Triepels
+# Copyright 2020 Ron Triepels
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,95 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#' Length of an Object
+#'
+#' Calculate \code{length(x)}.
+#'
+#' @param x either a cg_node object or a numerical vector or array.
+#' @param name character scalar, name of the operation (optional).
+#'
+#' @return cg_operator object.
+#'
+#' @note This operator is not differentiable. Any attempt to differentiate this operator will result in an error.
+#'
+#' @seealso \link[base]{length}
+#'
+#' @author Ron Triepels
+#' @export
+cg_length <- function(x, name = NULL)
+{
+  cg_operator(length, list(x), name)
+}
+
+# Function definition
+delayedAssign("length", cg_function(def = base::length))
+
+#' Coerce to a Numerical Vector
+#'
+#' Coerce \code{x} to a one-dimensional numerical vector.
+#'
+#' @param x either a cg_node object or a numerical matrix or array.
+#' @param name character scalar, name of the operation (optional).
+#'
+#' @return cg_operator object.
+#'
+#' @note This function is identical to \code{cg_as_numeric}.
+#'
+#' @seealso \link[base:double]{as.double}
+#'
+#' @author Ron Triepels
+#' @export
+cg_as_double <- function(x, name = NULL)
+{
+  cg_operator(as_double, list(x), name)
+}
+
+# Function definition
+delayedAssign("as_double", cg_function(
+  def = base::as.double,
+  grads = list(
+    function(x, value, grad)
+    {
+      if(is.array(x))
+      {
+        array(grad, dim(x))
+      }
+      else
+      {
+        grad
+      }
+    }
+  )
+))
+
+#' Coerce to a Numerical Vector
+#'
+#' Coerce \code{x} to a one-dimensional numerical vector.
+#'
+#' @param x either a cg_node object or a numerical matrix or array.
+#' @param name character scalar, name of the operation (optional).
+#'
+#' @return cg_operator object.
+#'
+#' @note This function is identical to \code{cg_as_double}.
+#'
+#' @seealso \link[base:double]{as.numeric}
+#'
+#' @author Ron Triepels
+#' @export
+cg_as_numeric <- function(x, name = NULL)
+{
+  cg_operator(as_double, list(x), name)
+}
+
 #' Positive
 #'
 #' Calculate \code{x}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Arithmetic]{positive}
 #'
@@ -34,7 +115,7 @@ cg_pos <- function(x, name = NULL)
 delayedAssign("pos", cg_function(
   def = base::`+`,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad
     }
@@ -45,10 +126,10 @@ delayedAssign("pos", cg_function(
 #'
 #' Calculate \code{-x}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Arithmetic]{negative}
 #'
@@ -63,7 +144,7 @@ cg_neg <- function(x, name = NULL)
 delayedAssign("neg", cg_function(
   def = base::`-`,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       -grad
     }
@@ -74,11 +155,11 @@ delayedAssign("neg", cg_function(
 #'
 #' Calculate \code{x + y}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
-#' @param y either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
+#' @param y either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Arithmetic]{add}
 #'
@@ -93,7 +174,7 @@ cg_add <- function(x, y, name = NULL)
 delayedAssign("add", cg_function(
   def = base::`+`,
   grads = list(
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(x))
       {
@@ -104,7 +185,7 @@ delayedAssign("add", cg_function(
         bsum(grad, length(x))
       }
     },
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(y))
       {
@@ -119,6 +200,7 @@ delayedAssign("add", cg_function(
 ))
 
 #' @export
+#' @author Ron Triepels
 `+.cg_node` <- function(x, y)
 {
   if(missing(y))
@@ -135,11 +217,11 @@ delayedAssign("add", cg_function(
 #'
 #' Calculate \code{x - y}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
-#' @param y either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
+#' @param y either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Arithmetic]{subtract}
 #'
@@ -154,7 +236,7 @@ cg_sub <- function(x, y, name = NULL)
 delayedAssign("sub", cg_function(
   def = base::`-`,
   grads = list(
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(x))
       {
@@ -165,7 +247,7 @@ delayedAssign("sub", cg_function(
         bsum(grad, length(x))
       }
     },
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(y))
       {
@@ -197,11 +279,11 @@ delayedAssign("sub", cg_function(
 #'
 #' Calculate \code{x * y}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
-#' @param y either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
+#' @param y either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Arithmetic]{multiply}
 #'
@@ -216,7 +298,7 @@ cg_mul <- function(x, y, name = NULL)
 delayedAssign("mul", cg_function(
   def = base::`*`,
   grads = list(
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(x))
       {
@@ -227,7 +309,7 @@ delayedAssign("mul", cg_function(
         bsum(grad * y, length(x))
       }
     },
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(y))
       {
@@ -242,6 +324,7 @@ delayedAssign("mul", cg_function(
 ))
 
 #' @export
+#' @author Ron Triepels
 `*.cg_node` <- function(x, y)
 {
   cg_mul(x, y)
@@ -251,11 +334,11 @@ delayedAssign("mul", cg_function(
 #'
 #' Calculate \code{x / y}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
-#' @param y either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
+#' @param y either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Arithmetic]{divide}
 #'
@@ -270,7 +353,7 @@ cg_div <- function(x, y, name = NULL)
 delayedAssign("div", cg_function(
   def = base::`/`,
   grads = list(
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(x))
       {
@@ -281,7 +364,7 @@ delayedAssign("div", cg_function(
         bsum(grad / y, length(x))
       }
     },
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(y))
       {
@@ -296,6 +379,7 @@ delayedAssign("div", cg_function(
 ))
 
 #' @export
+#' @author Ron Triepels
 `/.cg_node` <- function(x, y)
 {
   cg_div(x, y)
@@ -305,11 +389,11 @@ delayedAssign("div", cg_function(
 #'
 #' Calculate \code{x ^ y}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
-#' @param y either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
+#' @param y either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Arithmetic]{power}
 #'
@@ -324,7 +408,7 @@ cg_pow <- function(x, y, name = NULL)
 delayedAssign("pow", cg_function(
   def = base::`^`,
   grads = list(
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(x))
       {
@@ -335,7 +419,7 @@ delayedAssign("pow", cg_function(
         bsum(grad * y * x ^ (y - 1), length(x))
       }
     },
-    function(x, y, val, grad)
+    function(x, y, value, grad)
     {
       if(is.array(y))
       {
@@ -350,6 +434,7 @@ delayedAssign("pow", cg_function(
 ))
 
 #' @export
+#' @author Ron Triepels
 `^.cg_node` <- function(x, y)
 {
   cg_pow(x, y)
@@ -359,10 +444,10 @@ delayedAssign("pow", cg_function(
 #'
 #' Calculate \code{x ^ 2}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @note This function is equivalent to \code{cg_pow(x, 2)}.
 #'
@@ -379,10 +464,10 @@ cg_square <- function(x, name = NULL)
 delayedAssign("square", cg_function(
   def = function(x)
   {
-    x * x
+    x^2
   },
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       if(is.array(x))
       {
@@ -400,10 +485,10 @@ delayedAssign("square", cg_function(
 #'
 #' Calculate \code{sqrt(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:MathFun]{sqrt}
 #'
@@ -418,9 +503,9 @@ cg_sqrt <- function(x, name = NULL)
 delayedAssign("sqrt", cg_function(
   def = base::sqrt,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
-      grad * 1 / (2 * val)
+      grad * 1 / (2 * value)
     }
   )
 ))
@@ -429,10 +514,10 @@ delayedAssign("sqrt", cg_function(
 #'
 #' Calculate \code{exp(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:log]{exp}
 #'
@@ -447,9 +532,9 @@ cg_exp <- function(x, name = NULL)
 delayedAssign("exp", cg_function(
   def = base::exp,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
-      grad * val
+      grad * value
     }
   )
 ))
@@ -458,10 +543,10 @@ delayedAssign("exp", cg_function(
 #'
 #' Calculate \code{log(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:log]{log}
 #'
@@ -476,7 +561,7 @@ cg_ln <- function(x, name = NULL)
 delayedAssign("ln", cg_function(
   def = base::log,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad / x
     }
@@ -487,10 +572,10 @@ delayedAssign("ln", cg_function(
 #'
 #' Calculate \code{log2(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:log]{log2}
 #'
@@ -505,7 +590,7 @@ cg_log2 <- function(x, name = NULL)
 delayedAssign("log2", cg_function(
   def = base::log2,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad / (x * log(2))
     }
@@ -516,10 +601,10 @@ delayedAssign("log2", cg_function(
 #'
 #' Calculate \code{log10(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:log]{log10}
 #'
@@ -534,7 +619,7 @@ cg_log10 <- function(x, name = NULL)
 delayedAssign("log10", cg_function(
   def = base::log10,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad / (x * log(10))
     }
@@ -545,10 +630,10 @@ delayedAssign("log10", cg_function(
 #'
 #' Calculate \code{abs(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:MathFun]{abs}
 #'
@@ -563,9 +648,9 @@ cg_abs <- function(x, name = NULL)
 delayedAssign("abs", cg_function(
   def = base::abs,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
-      grad * (x / val)
+      grad * (x / value)
     }
   )
 ))
@@ -574,10 +659,10 @@ delayedAssign("abs", cg_function(
 #'
 #' Calculate \code{sin(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Trig]{sin}
 #'
@@ -592,7 +677,7 @@ cg_sin <- function(x, name = NULL)
 delayedAssign("sin", cg_function(
   def = base::sin,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad * cos(x)
     }
@@ -603,10 +688,10 @@ delayedAssign("sin", cg_function(
 #'
 #' Calculate \code{cos(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Trig]{cos}
 #'
@@ -621,7 +706,7 @@ cg_cos <- function(x, name = NULL)
 delayedAssign("cos", cg_function(
   def = base::cos,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       -grad * sin(x)
     }
@@ -632,10 +717,10 @@ delayedAssign("cos", cg_function(
 #'
 #' Calculate \code{tan(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Trig]{tan}
 #'
@@ -650,7 +735,7 @@ cg_tan <- function(x, name = NULL)
 delayedAssign("tan", cg_function(
   def = base::tan,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad / cos(x) ^ 2
     }
@@ -661,10 +746,10 @@ delayedAssign("tan", cg_function(
 #'
 #' Calculate \code{sinh(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Hyperbolic]{sinh}
 #'
@@ -679,7 +764,7 @@ cg_sinh <- function(x, name = NULL)
 delayedAssign("sinh", cg_function(
   def = base::sinh,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad * cosh(x)
     }
@@ -690,10 +775,10 @@ delayedAssign("sinh", cg_function(
 #'
 #' Calculate \code{cosh(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Hyperbolic]{cosh}
 #'
@@ -708,7 +793,7 @@ cg_cosh <- function(x, name = NULL)
 delayedAssign("cosh", cg_function(
   def = base::cosh,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad * sinh(x)
     }
@@ -719,10 +804,10 @@ delayedAssign("cosh", cg_function(
 #'
 #' Calculate \code{tanh(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Hyperbolic]{tanh}
 #'
@@ -737,9 +822,9 @@ cg_tanh <- function(x, name = NULL)
 delayedAssign("tanh", cg_function(
   def = base::tanh,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
-      grad * (1 - val ^ 2)
+      grad * (1 - value ^ 2)
     }
   )
 ))
@@ -748,10 +833,10 @@ delayedAssign("tanh", cg_function(
 #'
 #' Calculate \code{asin(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Trig]{asin}
 #'
@@ -766,7 +851,7 @@ cg_asin <- function(x, name = NULL)
 delayedAssign("asin", cg_function(
   def = base::asin,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad / sqrt(1 - x ^ 2)
     }
@@ -777,10 +862,10 @@ delayedAssign("asin", cg_function(
 #'
 #' Calculate \code{acos(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Trig]{acos}
 #'
@@ -795,7 +880,7 @@ cg_acos <- function(x, name = NULL)
 delayedAssign("acos", cg_function(
   def = base::acos,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       -grad / sqrt(1 - x ^ 2)
     }
@@ -806,10 +891,10 @@ delayedAssign("acos", cg_function(
 #'
 #' Calculate \code{atan(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Trig]{atan}
 #'
@@ -824,7 +909,7 @@ cg_atan <- function(x, name = NULL)
 delayedAssign("atan", cg_function(
   def = base::atan,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad / (x ^ 2 + 1)
     }
@@ -835,10 +920,10 @@ delayedAssign("atan", cg_function(
 #'
 #' Calculate \code{asinh(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Hyperbolic]{asinh}
 #'
@@ -853,7 +938,7 @@ cg_asinh <- function(x, name = NULL)
 delayedAssign("asinh", cg_function(
   def = base::asinh,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad / sqrt(x ^ 2 + 1)
     }
@@ -864,10 +949,10 @@ delayedAssign("asinh", cg_function(
 #'
 #' Calculate \code{acosh(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Hyperbolic]{acosh}
 #'
@@ -882,7 +967,7 @@ cg_acosh <- function(x, name = NULL)
 delayedAssign("acosh", cg_function(
   def = base::acosh,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad / sqrt(x ^ 2 - 1)
     }
@@ -893,10 +978,10 @@ delayedAssign("acosh", cg_function(
 #'
 #' Calculate \code{atanh(x)}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @seealso \link[base:Hyperbolic]{atanh}
 #'
@@ -911,7 +996,7 @@ cg_atanh <- function(x, name = NULL)
 delayedAssign("atanh", cg_function(
   def = base::atanh,
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
       grad / (1 - x ^ 2)
     }
@@ -922,10 +1007,10 @@ delayedAssign("atanh", cg_function(
 #'
 #' Calculate \code{1 / (1 + exp(-x))}.
 #'
-#' @param x either a cg_node object or a numeric vector or array.
+#' @param x either a cg_node object or a numerical vector or array.
 #' @param name character scalar, name of the operation (optional).
 #'
-#' @return cg_operator object, node of the operation.
+#' @return cg_operator object.
 #'
 #' @author Ron Triepels
 #' @export
@@ -941,9 +1026,9 @@ delayedAssign("sigmoid", cg_function(
     .Call("sigmoid", x, PACKAGE = "cgraph")
   },
   grads = list(
-    function(x, val, grad)
+    function(x, value, grad)
     {
-      grad * val * (1 - val)
+      grad * value * (1 - value)
     }
   )
 ))

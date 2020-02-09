@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef CLASS_H
-#define CLASS_H
+#ifndef SYMBOLS_H
+#define SYMBOLS_H
 
 #define R_NO_REMAP
 
@@ -23,18 +23,19 @@ limitations under the License.
 #include <Rinternals.h>
 
 /*
- * MACROS
+ * GLOBAL SYMBOLS
  */
 
-#define CG_GET(x, SYMBOL) Rf_findVarInFrame(x, SYMBOL)
-#define CG_SET(x, SYMBOL, v) Rf_defineVar(SYMBOL, v, x)
-
-/*
- * PUBLIC FUNCTIONS
- */
-
-SEXP cg_class(const char *name);
-
-int cg_is(SEXP env, const char *name);
+extern SEXP CG_ID_SYMBOL;
+extern SEXP CG_DEF_SYMBOL;
+extern SEXP CG_FUN_SYMBOL;
+extern SEXP CG_GRAD_SYMBOL;
+extern SEXP CG_NAME_SYMBOL;
+extern SEXP CG_TYPE_SYMBOL;
+extern SEXP CG_EAGER_SYMBOL;
+extern SEXP CG_GRADS_SYMBOL;
+extern SEXP CG_NODES_SYMBOL;
+extern SEXP CG_VALUE_SYMBOL;
+extern SEXP CG_INPUTS_SYMBOL;
 
 #endif

@@ -1,3 +1,15 @@
+cgraph 6.0.1
+----------------------------------------------------------------
+
+New Features:
+
+* Added operator `cg_rowmeans` and `cg_colmeans`.
+
+Bug Fixes:
+
+* Global symbols in the C-API are now correctly defined (fixes CRAN gcc10 error).
+* Evaluating or differentiating a graph with operators having invalid inputs or invalid gradient functions no longer causes a segfault.
+
 cgraph 6.0.0
 ----------------------------------------------------------------
 
@@ -196,4 +208,4 @@ cgraph 1.0.0
 
 Comments:
 
-* CRAN Submission.
+* Initial CRAN Submission.

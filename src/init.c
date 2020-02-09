@@ -25,8 +25,33 @@ limitations under the License.
 #include "graph.h"
 #include "vector.h"
 #include "session.h"
+#include "symbols.h"
 #include "function.h"
 #include "internal.h"
+
+/*
+ * SESSION DEFINITION
+ */
+
+cg_session_t session;
+
+/*
+ * SYMBOL DEFINITIONS
+ */
+
+SEXP CG_ID_SYMBOL      = NULL;
+SEXP CG_DEF_SYMBOL     = NULL;
+SEXP CG_FUN_SYMBOL     = NULL;
+SEXP CG_GRAD_SYMBOL    = NULL;
+SEXP CG_NAME_SYMBOL    = NULL;
+SEXP CG_TYPE_SYMBOL    = NULL;
+SEXP CG_EAGER_SYMBOL   = NULL;
+SEXP CG_GRADS_SYMBOL   = NULL;
+SEXP CG_GRAPH_SYMBOL   = NULL;
+SEXP CG_NODES_SYMBOL   = NULL;
+SEXP CG_VALUE_SYMBOL   = NULL;
+SEXP CG_INPUTS_SYMBOL  = NULL;
+SEXP CG_SESSION_SYMBOL = NULL;
 
 /*
  * LIBRARY INITIALIZATION
@@ -63,7 +88,7 @@ void R_init_cgraph(DllInfo *dll)
   R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
   R_useDynamicSymbols(dll, FALSE);
 
-  // Initialize symbols
+  // Install symbols
   CG_ID_SYMBOL      = Rf_install("id");
   CG_DEF_SYMBOL     = Rf_install("def");
   CG_FUN_SYMBOL     = Rf_install("fun");
@@ -72,12 +97,7 @@ void R_init_cgraph(DllInfo *dll)
   CG_TYPE_SYMBOL    = Rf_install("type");
   CG_EAGER_SYMBOL   = Rf_install("eager");
   CG_GRADS_SYMBOL   = Rf_install("grads");
-  CG_GRAPH_SYMBOL   = Rf_install("graph");
   CG_NODES_SYMBOL   = Rf_install("nodes");
   CG_VALUE_SYMBOL   = Rf_install("value");
   CG_INPUTS_SYMBOL  = Rf_install("inputs");
-  CG_SESSION_SYMBOL = Rf_install("session");
-
-  // Initialize a new session
-  cg_session();
 }

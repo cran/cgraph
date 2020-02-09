@@ -19,60 +19,19 @@ limitations under the License.
 #include <R.h>
 #include <Rinternals.h>
 
-#include "class.h"
 #include "function.h"
 
 /*
- * PRIVATE METHODS
+ * INLINED GET/SET FUNCTIONS
  */
 
-SEXP cg_function_def(SEXP function)
-{
-  SEXP def = PROTECT(CG_GET(function, CG_DEF_SYMBOL));
+extern inline SEXP cg_function_def(SEXP function);
 
-  if(!Rf_isFunction(def))
-  {
-    Rf_errorcall(R_NilValue, "function has no definition");
-  }
+extern inline void cg_function_set_def(SEXP function, SEXP def);
 
-  UNPROTECT(1);
+extern inline SEXP cg_function_grads(SEXP function);
 
-  return def;
-}
-
-void cg_function_set_def(SEXP function, SEXP def)
-{
-  if(!Rf_isFunction(def))
-  {
-    Rf_errorcall(R_NilValue, "argument 'def' must be a function");
-  }
-
-  CG_SET(function, CG_DEF_SYMBOL, def);
-}
-
-SEXP cg_function_grads(SEXP function)
-{
-  SEXP grads = PROTECT(CG_GET(function, CG_GRADS_SYMBOL));
-
-  if(TYPEOF(grads) != VECSXP)
-  {
-    Rf_errorcall(R_NilValue, "function has no gradients");
-  }
-
-  UNPROTECT(1);
-
-  return grads;
-}
-
-void cg_function_set_grads(SEXP function, SEXP grads)
-{
-  if(TYPEOF(grads) != VECSXP)
-  {
-    Rf_errorcall(R_NilValue, "argument 'grads' must be a list of gradient functions");
-  }
-
-  CG_SET(function, CG_GRADS_SYMBOL, grads);
-}
+extern inline void cg_function_set_grads(SEXP function, SEXP grads);
 
 /*
  * PUBLIC CONSTRUCTORS
@@ -102,7 +61,7 @@ SEXP cg_function(SEXP def, SEXP grads)
     }
   }
 
-  SEXP function = PROTECT(cg_class1("cg_function"));
+  SEXP function = PROTECT(cg_class("cg_function"));
 
   CG_SET(function, CG_DEF_SYMBOL, def);
   CG_SET(function, CG_GRADS_SYMBOL, grads);
